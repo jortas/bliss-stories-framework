@@ -220,12 +220,6 @@ object SliderDefaults {
     const val DisabledTickAlpha = 0.12f
 }
 
-/**
- * Represents the colors used by a [Slider] and its parts in different states
- *
- * See [SliderDefaults.colors] for the default implementation that follows Material
- * specifications.
- */
 @Stable
 interface SliderColors {
 
@@ -328,7 +322,7 @@ private fun Track(
     positionFractionEnd: Float,
     tickFractions: List<Float>,
     thumbPx: Float,
-    trackStrokeWidth: Float
+    trackStrokeWidh: Float
 ) {
     val inactiveTrackColor = colors.trackColor(enabled, active = false)
     val activeTrackColor = colors.trackColor(enabled, active = true)
