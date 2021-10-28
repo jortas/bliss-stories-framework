@@ -32,7 +32,11 @@ class MainActivity : AppCompatActivity() {
                 MaterialTheme {
                     Box(modifier = Modifier.fillMaxSize()) {
                         var sliderPosition by remember { mutableStateOf(0f) }
-                        Slider(value = sliderPosition, onValueChange = { sliderPosition = it })
+                        Slider(
+                            value = sliderPosition,
+                            onValueChange = { sliderPosition = it },
+                            values = listOf(0.1f,0.4f,0.6f,1f,2f)
+                        )
                     }
                 }
             }
