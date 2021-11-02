@@ -324,19 +324,6 @@ private fun Ticks(
     }
 }
 
-private fun snapValueToTick(
-    current: Float,
-    tickFractions: List<Float>,
-    minPx: Float,
-    maxPx: Float
-): Float {
-    // target is a closest anchor to the `current`, if exists
-    return tickFractions
-        .minByOrNull { abs(lerp(minPx, maxPx, it) - current) }
-        ?.run { lerp(minPx, maxPx, this) }
-        ?: current
-}
-
 private fun stepsToTickFractions(steps: Int): List<Float> {
     return if (steps == 0) emptyList() else List(steps + 2) { it.toFloat() / (steps + 1) }
 }

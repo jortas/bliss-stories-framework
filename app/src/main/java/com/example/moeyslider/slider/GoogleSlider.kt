@@ -199,3 +199,16 @@ internal suspend fun animateToTarget(
         }
     }
 }
+
+internal fun snapValueToTick(
+    current: Float,
+    tickFractions: List<Float>,
+    minPx: Float,
+    maxPx: Float
+): Float {
+    // target is a closest anchor to the `current`, if exists
+    return tickFractions
+        .minByOrNull { abs(lerp(minPx, maxPx, it) - current) }
+        ?.run { lerp(minPx, maxPx, this) }
+        ?: current
+}
