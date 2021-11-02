@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -15,6 +16,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
+import com.example.moeyslider.slider.BlissSliderColors
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,12 +33,20 @@ class MainActivity : AppCompatActivity() {
             setContent {
                 // In Compose world
                 MaterialTheme {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
                         var sliderPosition by remember { mutableStateOf(0f) }
                         Slider(
                             value = sliderPosition,
                             onValueChange = { sliderPosition = it },
-                            values = listOf(0.1f,0.4f,0.6f,1f,2f)
+                            values = listOf(0.1f, 0.4f, 0.6f, 1f, 2f),
+                            trackColors = BlissSliderColors.Defaults.track(
+                                activeBrush = Brush.horizontalGradient(
+                                    listOf(Color.Blue, Color.Yellow)
+                                )
+                            ),
+                            tickColors = BlissSliderColors.Defaults.tick(
+                                activeColor = Color.White
+                            )
                         )
                     }
                 }
