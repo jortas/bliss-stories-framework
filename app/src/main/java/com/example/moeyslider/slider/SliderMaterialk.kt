@@ -1,24 +1,13 @@
-package com.example.moeyslider
+package com.example.moeyslider.slider
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSizeIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
@@ -30,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
@@ -39,11 +29,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import com.example.moeyslider.slider.BlissSliderColors
+import com.example.moeyslider.*
+import com.example.moeyslider.CorrectValueSideEffect
+import com.example.moeyslider.SliderDraggableState
+import com.example.moeyslider.animateToTarget
+import com.example.moeyslider.snapValueToTick
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-
 
 //Values as priority over combination of steps with constructorValueRange
 @Composable
@@ -64,9 +56,9 @@ fun Slider(
     val onValueChangeState = rememberUpdatedState(onValueChange)
 
     val valueRange = remember(values) {
-        if (values.isEmpty()){
+        if (values.isEmpty()) {
             constructorValueRange
-        }else {
+        } else {
             values.minOrNull()!!..values.maxOrNull()!!
         }
     }
@@ -130,11 +122,12 @@ fun Slider(
 
         val coerced = value.coerceIn(valueRange.start, valueRange.endInclusive)
         val fraction = calcFraction(valueRange.start, valueRange.endInclusive, coerced)
+
         SliderImpl(
             enabled,
             fraction,
             ticks,
-            BlissSliderColors(thumbColors,trackColors,tickColors),
+            BlissSliderColors(thumbColors, trackColors, tickColors),
             maxPx,
             interactionSource,
             modifier = press.then(drag)
@@ -169,13 +162,13 @@ private fun SliderImpl(
         val center = Modifier.align(Alignment.CenterStart)
 
         Track(
-            center.fillMaxSize(),
+            center,
             colors.trackColor,
             enabled,
             0f,
             positionFraction,
             thumbRadius,
-            trackStrokeWidth
+            trackStrokeWidth,
         )
 
         Ticks(
@@ -188,7 +181,7 @@ private fun SliderImpl(
             tickRadius
         )
 
-        SliderThumb(
+        Thumb(
             center,
             offset,
             interactionSource,
@@ -200,7 +193,7 @@ private fun SliderImpl(
 }
 
 @Composable
-private fun SliderThumb(
+private fun Thumb(
     modifier: Modifier,
     offset: Dp,
     interactionSource: MutableInteractionSource,
@@ -229,7 +222,7 @@ private fun SliderThumb(
             ThumbDefaultElevation
         }
 
-        Spacer(
+        Box(
             Modifier
                 .size(thumbSize, thumbSize)
                 .indication(
@@ -237,8 +230,24 @@ private fun SliderThumb(
                     indication = rememberRipple(bounded = false, radius = ThumbRippleRadius)
                 )
                 .shadow(if (enabled) elevation else 0.dp, CircleShape, clip = false)
-                .background(colors.thumbColor(enabled).value, CircleShape)
-        )
+                .background(Color.White, CircleShape)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(colors.thumbColor(enabled).value)
+                    .align(Alignment.Center)
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .align(Alignment.Center)
+            )
+        }
     }
 }
 
@@ -250,40 +259,41 @@ private fun Track(
     positionFractionStart: Float,
     positionFractionEnd: Float,
     thumbRadius: Float,
-    trackStrokeWidth: Float
+    trackStrokeWidth: Float,
 ) {
 
     val activeTrackBrush = colors.brush(enabled, active = true)
     val inactiveTrackBrush = colors.brush(enabled, active = false)
-    Canvas(modifier) {
-        val isRtl = layoutDirection == LayoutDirection.Rtl
+    Canvas(modifier.fillMaxSize()) {
         val sliderLeft = Offset(thumbRadius, center.y)
         val sliderRight = Offset(size.width - thumbRadius, center.y)
-        val sliderStart = if (isRtl) sliderRight else sliderLeft
-        val sliderEnd = if (isRtl) sliderLeft else sliderRight
+
         drawLine(
             inactiveTrackBrush.value,
-            sliderStart,
-            sliderEnd,
+            sliderLeft,
+            sliderRight,
             trackStrokeWidth,
             StrokeCap.Round
         )
-        val sliderValueEnd = Offset(
-            sliderStart.x + (sliderEnd.x - sliderStart.x) * positionFractionEnd,
-            center.y
-        )
+    }
 
-        val sliderValueStart = Offset(
-            sliderStart.x + (sliderEnd.x - sliderStart.x) * positionFractionStart,
-            center.y
-        )
+    val theDp = with(LocalDensity.current) {
+        thumbRadius.toDp()
+    }
 
+    Canvas(
+        modifier
+            .padding(start = theDp, end = theDp)
+            .fillMaxWidth(fraction = positionFractionEnd)
+    ) {
+        val sliderLeft = Offset(0f, center.y)
+        val sliderRight = Offset(size.width, center.y)
         drawLine(
             activeTrackBrush.value,
-            sliderValueStart,
-            sliderValueEnd,
+            sliderLeft,
+            sliderRight,
             trackStrokeWidth,
-            StrokeCap.Round
+            StrokeCap.Round,
         )
     }
 }
@@ -328,7 +338,10 @@ private fun stepsToTickFractions(steps: Int): List<Float> {
     return if (steps == 0) emptyList() else List(steps + 2) { it.toFloat() / (steps + 1) }
 }
 
-private fun valueRangeToDiscreteValues(valueRange: ClosedFloatingPointRange<Float>, steps: Int = 0): List<Float> {
+private fun valueRangeToDiscreteValues(
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int = 0
+): List<Float> {
     return stepsToTickFractions(steps).map { (it - valueRange.start) / (valueRange.endInclusive - valueRange.start) }
 }
 
@@ -348,7 +361,7 @@ private fun calcFraction(a: Float, b: Float, pos: Float) =
     (if (b - a == 0f) 0f else (pos - a) / (b - a)).coerceIn(0f, 1f)
 
 // Internal to be referred to in tests
-internal val ThumbRadius = 10.dp
+internal val ThumbRadius = 18.dp
 private val ThumbRippleRadius = 24.dp
 private val ThumbDefaultElevation = 1.dp
 private val ThumbPressedElevation = 6.dp
