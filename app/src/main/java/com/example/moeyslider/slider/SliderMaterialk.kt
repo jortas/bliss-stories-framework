@@ -36,6 +36,7 @@ import com.example.moeyslider.animateToTarget
 import com.example.moeyslider.snapValueToTick
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.lang.RuntimeException
 
 //Values as priority over combination of steps with constructorValueRange
 @Composable
@@ -44,7 +45,7 @@ fun Slider(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    constructorValueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    constructorValueRange: ClosedFloatingPointRange<Float>? = 0f..1f,
     steps: Int = 0,
     values: List<Float> = valueRangeToDiscreteValues(constructorValueRange, steps),
     onValueChangeFinished: (() -> Unit)? = null,
@@ -57,14 +58,24 @@ fun Slider(
 
     val valueRange = remember(values) {
         if (values.isEmpty()) {
-            constructorValueRange
+            constructorValueRange!!
         } else {
-            values.minOrNull()!!..values.maxOrNull()!!
+            var valuesRange = values.minOrNull()!!..values.maxOrNull()!!
+            constructorValueRange?.let {
+                if (!valuesRange.contains(it.start)) {
+                    valuesRange = it.start..valuesRange.endInclusive
+                }
+                if (!valuesRange.contains(it.endInclusive)) {
+                    valuesRange = valuesRange.start..it.endInclusive
+                }
+            }
+            valuesRange
         }
     }
 
+
     val ticks = remember(values) {
-        valuesToTickFractions(values)
+        valuesToTickFractions(values, valueRange)
     }
 
     BoxWithConstraints(
@@ -165,7 +176,6 @@ private fun SliderImpl(
             center,
             colors.trackColor,
             enabled,
-            0f,
             positionFraction,
             thumbRadius,
             trackStrokeWidth,
@@ -256,7 +266,6 @@ private fun Track(
     modifier: Modifier,
     colors: BlissSliderColors.Track,
     enabled: Boolean,
-    positionFractionStart: Float,
     positionFractionEnd: Float,
     thumbRadius: Float,
     trackStrokeWidth: Float,
@@ -277,13 +286,13 @@ private fun Track(
         )
     }
 
-    val theDp = with(LocalDensity.current) {
+    val paddingInDp = with(LocalDensity.current) {
         thumbRadius.toDp()
     }
 
     Canvas(
         modifier
-            .padding(start = theDp, end = theDp)
+            .padding(start = paddingInDp, end = paddingInDp)
             .fillMaxWidth(fraction = positionFractionEnd)
     ) {
         val sliderLeft = Offset(0f, center.y)
@@ -339,17 +348,20 @@ private fun stepsToTickFractions(steps: Int): List<Float> {
 }
 
 private fun valueRangeToDiscreteValues(
-    valueRange: ClosedFloatingPointRange<Float>,
+    valueRange: ClosedFloatingPointRange<Float>?,
     steps: Int = 0
 ): List<Float> {
+    if (valueRange == null) {
+        throw RuntimeException("Slider must have a range or a list of values")
+    }
     return stepsToTickFractions(steps).map { (it - valueRange.start) / (valueRange.endInclusive - valueRange.start) }
 }
 
-private fun valuesToTickFractions(values: List<Float>): List<Float> {
-    val min = values.minOrNull()
-    return values.maxOrNull()?.let { max ->
-        values.map { (it - min!!) / (max - min) }
-    } ?: emptyList()
+private fun valuesToTickFractions(
+    values: List<Float>,
+    valueRange: ClosedFloatingPointRange<Float>
+): List<Float> {
+    return values.map { (it - valueRange.start) / (valueRange.endInclusive- valueRange.start) }
 }
 
 // Scale x1 from a1..b1 range to a2..b2 range

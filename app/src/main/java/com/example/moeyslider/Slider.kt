@@ -3,71 +3,72 @@ package com.example.moeyslider
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import androidx.constraintlayout.widget.ConstraintLayout
-import android.view.MotionEvent
-import android.widget.ImageView
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.platform.AbstractComposeView
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.example.moeyslider.slider.BlissSliderColors
+import com.example.moeyslider.slider.Slider
 
 
 @SuppressLint("ClickableViewAccessibility")
-class Slider : ConstraintLayout {
+class Slider @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : AbstractComposeView(context, attrs, defStyleAttr) {
+    val blueColor =  Color(0xFF71B9E3)
 
-    constructor(context: Context) : super(context)
-
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
-
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
-        context,
-        attrs,
-        defStyleAttr
-    )
-
-    var thumbPosition = 0f
-    var sliderProgress: ImageView
-    var originalX: Float
-
-    init {
-        inflate(R.layout.slider, true)
-        sliderProgress = this.findViewById(R.id.sliderProgress)
-        originalX = sliderProgress.x
+    var value: MutableLiveData<Float> = MutableLiveData(0f)
 
 
+    @Composable
+    override fun Content() {
 
-        this.findViewById<View>(R.id.thumb).setOnTouchListener { view, event ->
-            if (event == null) {
-                false
+        var sliderValue = value.observeAsState(0f)
+
+        MaterialTheme {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+
+
+                Slider(
+                    value = sliderValue.value,
+                    onValueChange = {value.value = it  },
+                    constructorValueRange = 0f..2f,
+                    values = listOf(0.1f, 0.4f, 0.6f, 1f, 2f),
+                    trackColors = BlissSliderColors.Defaults.track(
+                        activeBrush = Brush.horizontalGradient(
+                            listOf(
+                                blueColor, Color(0xFFAEB8BA)
+                            ),
+                            tileMode = TileMode.Clamp
+                        ),
+                        inactiveColor = Color(0x2271B9E3),
+                    ),
+                    tickColors = BlissSliderColors.Defaults.tick(
+                        activeColor = Color.White,
+                        inactiveColor = blueColor.copy(alpha = 0.3f)
+                    ),
+                    thumbColors = BlissSliderColors.Defaults.thumb(
+                        color = blueColor
+                    ),
+                )
             }
-
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    thumbPosition = view.x - event.rawX
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    view.animate()
-                        .x(event.rawX + thumbPosition)
-                        .setDuration(0)
-                        .start()
-
-                    sliderProgress.animate()
-                        .scaleX( (event.rawX + thumbPosition))
-                        .x(originalX + event.rawX /2)
-                        .start()
-                }
-                    else -> false
-            }
-            true
         }
-
     }
-
 }
-
-fun ViewGroup.inflate(resId: Int, attachToRoot: Boolean = false): View =
-    context.layoutInflater.inflate(resId, this, attachToRoot)
-
-
-inline val Context.layoutInflater: LayoutInflater
-    get() = LayoutInflater.from(this)
