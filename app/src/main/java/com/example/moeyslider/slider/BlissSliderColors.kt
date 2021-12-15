@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
+import com.example.moeyslider.slider.BlissSliderColors.Defaults.ActiveColor
 
 
 @Immutable
@@ -20,8 +21,8 @@ data class BlissSliderColors(
 
     @Immutable
     data class Thumb(
-        val color: Color,
-        val disabledColor: Color,
+        val color: Color = Color.Unspecified,
+        val disabledColor: Color = Color.Unspecified,
     ) {
         @Composable
         fun thumbColor(enabled: Boolean): State<Color> {
@@ -35,7 +36,7 @@ data class BlissSliderColors(
         val activeColor: Color = Color.Unspecified,
         val inactiveColor: Color = Color.Unspecified,
         val disabledActiveColor: Color = Color.Unspecified,
-        val disabledInactiveColor: Color = Color.Unspecified,
+        val disabledInactiveColor: Color = disabledActiveColor.copy(alpha = Defaults.DisabledInactiveTrackAlpha),
 
         val activeBrush: Brush = SolidColor(activeColor),
         val inactiveBrush: Brush = SolidColor(inactiveColor),
@@ -57,12 +58,12 @@ data class BlissSliderColors(
 
     @Immutable
     data class Tick(
-        val activeColor: Color,
-        val inactiveColor: Color,
-        val disabledActiveColor: Color,
-        val disabledInactiveColor: Color
-    ) {
+        val activeColor: Color = ActiveColor.copy(alpha = Defaults.TickAlpha),
+        val inactiveColor: Color = activeColor.copy(alpha = Defaults.TickAlpha),
+        val disabledActiveColor: Color = activeColor.copy(alpha = Defaults.DisabledTickAlpha),
+        val disabledInactiveColor: Color = activeColor.copy(alpha = Defaults.DisabledTickAlpha)
 
+    ) {
         @Composable
         fun color(enabled: Boolean, active: Boolean): State<Color> {
             return rememberUpdatedState(
@@ -97,69 +98,32 @@ data class BlissSliderColors(
 
 
     object Defaults {
-        @Composable
-        fun thumb(
-            color: Color = MaterialTheme.colors.primary,
-            disabledColor: Color = MaterialTheme.colors.onSurface
-                .copy(alpha = ContentAlpha.disabled)
-                .compositeOver(MaterialTheme.colors.surface)
-        ): BlissSliderColors.Thumb = BlissSliderColors.Thumb(color, disabledColor)
 
-        @Composable
-        fun track(
-            activeColor: Color = MaterialTheme.colors.primary,
-            inactiveColor: Color = activeColor.copy(alpha = InactiveTrackAlpha),
-            disabledActiveColor: Color =
-                MaterialTheme.colors.onSurface.copy(alpha = DisabledActiveTrackAlpha),
-            disabledInactiveColor: Color = disabledActiveColor.copy(alpha = DisabledInactiveTrackAlpha),
-
-            activeBrush: Brush = SolidColor(activeColor),
-            inactiveBrush: Brush = SolidColor(inactiveColor),
-            disabledActiveBrush: Brush = SolidColor(disabledActiveColor),
-            disabledInactiveBrush: Brush = SolidColor(disabledInactiveColor)
-        ): BlissSliderColors.Track = BlissSliderColors.Track(
-            activeBrush = activeBrush,
-            inactiveBrush = inactiveBrush,
-            disabledActiveBrush = disabledActiveBrush,
-            disabledInactiveBrush = disabledInactiveBrush
-        )
-
-        @Composable
-        fun tick(
-            activeColor: Color = MaterialTheme.colors.primary.copy(alpha = TickAlpha),
-            inactiveColor: Color = activeColor.copy(alpha = TickAlpha),
-            disabledActiveColor: Color = activeColor.copy(alpha = DisabledTickAlpha),
-            disabledInactiveColor: Color = activeColor.copy(alpha = DisabledTickAlpha)
-        ): BlissSliderColors.Tick = BlissSliderColors.Tick(
-            activeColor,
-            inactiveColor,
-            disabledActiveColor,
-            disabledInactiveColor
-        )
+        val ActiveColor = Color.Blue
 
         /**
          * Default alpha of the inactive part of the track
          */
-        private const val InactiveTrackAlpha = 0.24f
+        const val InactiveTrackAlpha = 0.24f
 
         /**
          * Default alpha for the track when it is disabled but active
          */
-        private const val DisabledInactiveTrackAlpha = 0.12f
+        const val DisabledInactiveTrackAlpha = 0.12f
 
         /**
          * Default alpha for the track when it is disabled and inactive
          */
-        private const val DisabledActiveTrackAlpha = 0.32f
+        const val DisabledActiveTrackAlpha = 0.32f
 
         /**
          * Default alpha of the ticks that are drawn on top of the track
          */
-        private const val TickAlpha = 0.54f
+        const val TickAlpha = 0.54f
 
         /**
          * Default alpha for tick marks when they are disabled
          */
-        private const val DisabledTickAlpha = 0.12f
+        const val DisabledTickAlpha = 0.12f
     }
 }

@@ -2,11 +2,9 @@ package com.example.moeyslider
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -17,7 +15,8 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import com.example.moeyslider.slider.BlissSliderColors
-import com.example.moeyslider.slider.Slider
+import com.example.moeyslider.slider.BlissSlider
+import com.example.moeyslider.slider.BlissSliderParams
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,12 +46,13 @@ class MainActivity : AppCompatActivity() {
 
                         Text(text = sliderValue.value.toString())
 
-                        Slider(
+                        BlissSlider(
+                            BlissSliderParams(
                             value = sliderValue.value,
                             onValueChange = { liveData.value = it },
                             constructorValueRange = 0f..2f,
                             values = listOf(0.1f, 0.4f, 0.6f, 1f, 2f),
-                            trackColors = BlissSliderColors.Defaults.track(
+                            trackColors = BlissSliderColors.Track(
                                 activeBrush = Brush.horizontalGradient(
                                     listOf(
                                         blueColor, Color(0xFFAEB8BA)
@@ -61,13 +61,14 @@ class MainActivity : AppCompatActivity() {
                                 ),
                                 inactiveColor = Color(0x2271B9E3),
                             ),
-                            tickColors = BlissSliderColors.Defaults.tick(
+                            tickColors = BlissSliderColors.Tick(
                                 activeColor = Color.White,
                                 inactiveColor = blueColor.copy(alpha = 0.3f)
                             ),
-                            thumbColors = BlissSliderColors.Defaults.thumb(
+                            thumbColors = BlissSliderColors.Thumb(
                                 color = blueColor
                             ),
+                        )
                         )
                     }
                 }
