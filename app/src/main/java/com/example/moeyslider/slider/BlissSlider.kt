@@ -1,5 +1,6 @@
 package com.example.moeyslider.slider
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -9,16 +10,20 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Icon
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.LocalDensity
+import com.example.moeyslider.R
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -32,160 +37,125 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.lang.RuntimeException
 
-//Values as priority over combination of steps with constructorValueRange
-@Immutable
-data class BlissSliderParams(
-    val value: Float = 0f,
-    val onValueChange: (Float) -> Unit = {},
-    val modifier: Modifier = Modifier,
-    val enabled: Boolean = true,
-    val constructorValueRange: ClosedFloatingPointRange<Float>? = 0f..1f,
-    val steps: Int = 0,
-    val values: List<Float> = valueRangeToDiscreteValues(constructorValueRange, steps),
-    val onValueChangeFinished: (() -> Unit)? = null,
-    val thumbColors: BlissSliderColors.Thumb = BlissSliderColors.Thumb(),
-    val trackColors: BlissSliderColors.Track = BlissSliderColors.Track(),
-    val tickColors: BlissSliderColors.Tick = BlissSliderColors.Tick()
-)
-
-@Composable
-fun BlissSliderWithTutorial(
-    params: BlissSliderParams = BlissSliderParams()
-) {
-    BlissSlider(params)
-    Box(params.modifier.then(DefaultSliderConstraints)) {
-        val trackStrokeWidth: Float
-        val tickRadius: Float
-        val thumbRadius: Float
-        val widthDp: Dp
-
-        with(LocalDensity.current) {
-            trackStrokeWidth = TrackHeight.toPx()
-            tickRadius = TickRadius.toPx()
-            thumbRadius = ThumbRadius.toPx()
-
-            BlissSliderColors.Thumb(
-                center,
-                offset,
-                interactionSource,
-                colors.thumbColor,
-                enabled,
-                thumbSize
-            )
-        }
-    }
-}
-
 @Composable
 fun BlissSlider(
-    params: BlissSliderParams = BlissSliderParams()
+    modifier: Modifier = Modifier,
+    value: Float = 0f,
+    onValueChange: (Float) -> Unit = {},
+    enabled: Boolean = true,
+    constructorValueRange: ClosedFloatingPointRange<Float>? = 0f..1f,
+    steps: Int = 0,
+    values: List<Float> = valueRangeToDiscreteValues(constructorValueRange, steps),
+    onValueChangeFinished: (() -> Unit)? = null,
+    tutorialEnabled: Boolean = false,
+    colors: BlissSliderColors
 ) {
-    with(params) {
-        val interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    val interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 
-        val onValueChangeState = rememberUpdatedState(onValueChange)
+    val onValueChangeState = rememberUpdatedState(onValueChange)
 
-        val valueRange = remember(values) {
-            if (values.isEmpty()) {
-                constructorValueRange!!
-            } else {
-                var valuesRange = values.minOrNull()!!..values.maxOrNull()!!
-                constructorValueRange?.let {
-                    if (!valuesRange.contains(it.start)) {
-                        valuesRange = it.start..valuesRange.endInclusive
-                    }
-                    if (!valuesRange.contains(it.endInclusive)) {
-                        valuesRange = valuesRange.start..it.endInclusive
-                    }
+    val valueRange = remember(values) {
+        if (values.isEmpty()) {
+            constructorValueRange!!
+        } else {
+            var valuesRange = values.minOrNull()!!..values.maxOrNull()!!
+            constructorValueRange?.let {
+                if (!valuesRange.contains(it.start)) {
+                    valuesRange = it.start..valuesRange.endInclusive
                 }
-                valuesRange
+                if (!valuesRange.contains(it.endInclusive)) {
+                    valuesRange = valuesRange.start..it.endInclusive
+                }
+            }
+            valuesRange
+        }
+    }
+
+    val ticks = remember(values) {
+        valuesToTickFractions(values, valueRange)
+    }
+
+    BoxWithConstraints(
+        modifier
+            .requiredSizeIn(minHeight = ThumbRadius * 2)
+            .sliderSemantics(value, ticks, enabled, onValueChange, valueRange, ticks.count())
+            .focusable(enabled, interactionSource)
+    ) {
+        val maxPx = constraints.maxWidth.toFloat()
+        val minPx = 0f
+
+        fun scaleToUserValue(offset: Float) =
+            scale(minPx, maxPx, offset, valueRange.start, valueRange.endInclusive)
+
+        fun scaleToOffset(userValue: Float) =
+            scale(valueRange.start, valueRange.endInclusive, userValue, minPx, maxPx)
+
+        val scope = rememberCoroutineScope()
+        val rawOffset = remember { mutableStateOf(scaleToOffset(value)) }
+        val draggableState = remember(minPx, maxPx, valueRange) {
+            SliderDraggableState {
+                rawOffset.value = (rawOffset.value + it).coerceIn(minPx, maxPx)
+                onValueChangeState.value.invoke(scaleToUserValue(rawOffset.value))
             }
         }
 
-        val ticks = remember(values) {
-            valuesToTickFractions(values, valueRange)
-        }
+        CorrectValueSideEffect(::scaleToOffset, valueRange, rawOffset, value)
 
-        BoxWithConstraints(
-            modifier
-                .requiredSizeIn(minWidth = ThumbRadius * 2, minHeight = ThumbRadius * 2)
-                .sliderSemantics(value, ticks, enabled, onValueChange, valueRange, ticks.count())
-                .focusable(enabled, interactionSource)
-        ) {
-            val maxPx = constraints.maxWidth.toFloat()
-            val minPx = 0f
-
-            fun scaleToUserValue(offset: Float) =
-                scale(minPx, maxPx, offset, valueRange.start, valueRange.endInclusive)
-
-            fun scaleToOffset(userValue: Float) =
-                scale(valueRange.start, valueRange.endInclusive, userValue, minPx, maxPx)
-
-            val scope = rememberCoroutineScope()
-            val rawOffset = remember { mutableStateOf(scaleToOffset(value)) }
-            val draggableState = remember(minPx, maxPx, valueRange) {
-                SliderDraggableState {
-                    rawOffset.value = (rawOffset.value + it).coerceIn(minPx, maxPx)
-                    onValueChangeState.value.invoke(scaleToUserValue(rawOffset.value))
-                }
-            }
-
-            CorrectValueSideEffect(::scaleToOffset, valueRange, rawOffset, value)
-
-            val gestureEndAction = rememberUpdatedState<(Float) -> Unit> { velocity: Float ->
-                val current = rawOffset.value
-                val target = snapValueToTick(current, ticks, minPx, maxPx)
-                if (current != target) {
-                    scope.launch {
-                        animateToTarget(draggableState, current, target, velocity)
-                        onValueChangeFinished?.invoke()
-                    }
-                } else if (!draggableState.isDragging) {
-                    // check ifDragging in case the change is still in progress (touch -> drag case)
+        val gestureEndAction = rememberUpdatedState<(Float) -> Unit> { velocity: Float ->
+            val current = rawOffset.value
+            val target = snapValueToTick(current, ticks, minPx, maxPx)
+            if (current != target) {
+                scope.launch {
+                    animateToTarget(draggableState, current, target, velocity)
                     onValueChangeFinished?.invoke()
                 }
+            } else if (!draggableState.isDragging) {
+                // check ifDragging in case the change is still in progress (touch -> drag case)
+                onValueChangeFinished?.invoke()
             }
-
-            val press = Modifier.sliderPressModifier(
-                draggableState, interactionSource, maxPx, rawOffset, gestureEndAction, enabled
-            )
-
-            val drag = Modifier.draggable(
-                orientation = Orientation.Horizontal,
-                enabled = enabled,
-                interactionSource = interactionSource,
-                onDragStopped = { velocity -> gestureEndAction.value.invoke(velocity) },
-                startDragImmediately = draggableState.isDragging,
-                state = draggableState
-            )
-
-            val coerced = value.coerceIn(valueRange.start, valueRange.endInclusive)
-            val fraction = calcFraction(valueRange.start, valueRange.endInclusive, coerced)
-
-            SliderImpl(
-                enabled,
-                fraction,
-                ticks,
-                BlissSliderColors(thumbColors, trackColors, tickColors),
-                maxPx,
-                interactionSource,
-                modifier = press.then(drag)
-            )
         }
+
+        val press = Modifier.sliderPressModifier(
+            draggableState, interactionSource, maxPx, rawOffset, gestureEndAction, enabled
+        )
+
+        val drag = Modifier.draggable(
+            orientation = Orientation.Horizontal,
+            enabled = enabled,
+            interactionSource = interactionSource,
+            onDragStopped = { velocity -> gestureEndAction.value.invoke(velocity) },
+            startDragImmediately = draggableState.isDragging,
+            state = draggableState
+        )
+
+        val coerced = value.coerceIn(valueRange.start, valueRange.endInclusive)
+        val fraction = calcFraction(valueRange.start, valueRange.endInclusive, coerced)
+
+        SliderImpl(
+            modifier = press.then(drag),
+            enabled,
+            fraction,
+            ticks,
+            tutorialEnabled,
+            colors,
+            maxPx,
+            interactionSource
+        )
     }
 }
 
 @Composable
 private fun SliderImpl(
+    modifier: Modifier,
     enabled: Boolean,
     positionFraction: Float,
     tickFractions: List<Float>,
+    withTutorial: Boolean = false,
     colors: BlissSliderColors,
     width: Float,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier
 ) {
-    Box(modifier.then(DefaultSliderConstraints)) {
+    Box(modifier) {
         val trackStrokeWidth: Float
         val tickRadius: Float
         val thumbRadius: Float
@@ -198,13 +168,11 @@ private fun SliderImpl(
         }
 
         val thumbSize = ThumbRadius * 2
-        val offset = (widthDp - thumbSize) * positionFraction
         val center = Modifier.align(Alignment.CenterStart)
 
         Track(
             center,
-            colors.trackColor,
-            enabled,
+            colors,
             positionFraction,
             thumbRadius,
             trackStrokeWidth,
@@ -212,35 +180,48 @@ private fun SliderImpl(
 
         Ticks(
             modifier = center.fillMaxSize(),
-            colors = colors.tickColor,
-            enabled = enabled,
+            colors = colors,
             positionFractionEnd = positionFraction,
             tickFractions = tickFractions,
             thumbRadius,
             tickRadius
         )
 
+        val thumbPosition = (widthDp - thumbSize) * positionFraction
+
         Thumb(
             center,
-            offset,
+            thumbPosition,
             interactionSource,
-            colors.thumbColor,
+            colors,
             enabled,
             thumbSize
         )
+
+        if (withTutorial) {
+            val tutorialEndPosition = (widthDp - thumbSize) * 0.6f
+
+            ThumbTutorial(
+                modifier = center,
+                offset = thumbPosition,
+                tutorialEndPosition = tutorialEndPosition,
+                colors = colors,
+                thumbSize = thumbSize
+            )
+        }
     }
 }
 
 @Composable
 private fun Thumb(
     modifier: Modifier,
-    offset: Dp,
+    position: Dp,
     interactionSource: MutableInteractionSource,
-    colors: BlissSliderColors.Thumb,
+    colors: BlissSliderColors,
     enabled: Boolean,
     thumbSize: Dp
 ) {
-    Box(modifier.padding(start = offset)) {
+    Box(modifier.padding(start = position)) {
         val interactions = remember { mutableStateListOf<Interaction>() }
         LaunchedEffect(interactionSource) {
             interactionSource.interactions.collect { interaction ->
@@ -269,7 +250,7 @@ private fun Thumb(
                     indication = rememberRipple(bounded = false, radius = ThumbRippleRadius)
                 )
                 .shadow(if (enabled) elevation else 0.dp, CircleShape, clip = false)
-                .background(Color.White, CircleShape)
+                .background(colors.inThumbColor, CircleShape)
         ) {
             Box(
                 modifier = Modifier
@@ -283,7 +264,7 @@ private fun Thumb(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(colors.inThumbColor)
                     .align(Alignment.Center)
             )
         }
@@ -293,15 +274,14 @@ private fun Thumb(
 @Composable
 private fun Track(
     modifier: Modifier,
-    colors: BlissSliderColors.Track,
-    enabled: Boolean,
+    colors: BlissSliderColors,
     positionFractionEnd: Float,
     thumbRadius: Float,
     trackStrokeWidth: Float,
 ) {
 
-    val activeTrackBrush = colors.brush(enabled, active = true)
-    val inactiveTrackBrush = colors.brush(enabled, active = false)
+    val activeTrackBrush = colors.trackBrush(active = true)
+    val inactiveTrackBrush = colors.trackBrush(active = false)
     Canvas(modifier.fillMaxSize()) {
         val sliderLeft = Offset(thumbRadius, center.y)
         val sliderRight = Offset(size.width - thumbRadius, center.y)
@@ -336,20 +316,18 @@ private fun Track(
     }
 }
 
-
 @Composable
 private fun Ticks(
     modifier: Modifier,
-    colors: BlissSliderColors.Tick,
-    enabled: Boolean,
+    colors: BlissSliderColors,
     positionFractionEnd: Float,
     tickFractions: List<Float>,
     thumbRadius: Float,
     tickRadius: Float
 ) {
 
-    val inactiveColor = colors.color(enabled, active = false)
-    val activeColor = colors.color(enabled, active = true)
+    val inactiveColor = colors.tickColor(active = false)
+    val activeColor = colors.tickColor(active = true)
 
     Canvas(modifier) {
         val isRtl = layoutDirection == LayoutDirection.Rtl
@@ -368,6 +346,64 @@ private fun Ticks(
                 tickRadius * 2,
                 StrokeCap.Round
             )
+        }
+    }
+}
+
+@Composable
+private fun ThumbTutorial(
+    modifier: Modifier,
+    offset: Dp,
+    tutorialEndPosition: Dp,
+    colors: BlissSliderColors,
+    thumbSize: Dp
+) {
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val positionAndAlpha by infiniteTransition.animateValue(
+        initialValue = Pair(offset, 1f),
+        targetValue = Pair(tutorialEndPosition, 0f),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        typeConverter = TwoWayConverter(
+            convertToVector = { positionAndAlpha: Pair<Dp, Float> ->
+                AnimationVector2D(positionAndAlpha.first.value, positionAndAlpha.second)
+            },
+            convertFromVector = { vector: AnimationVector2D ->
+                Pair(vector.v1.dp, vector.v2)
+            }
+        )
+    )
+
+    Box(
+        modifier
+            .padding(start = positionAndAlpha.first)
+            .alpha(positionAndAlpha.second)
+    ) {
+        Box(
+            Modifier
+                .size(thumbSize, thumbSize)
+                .shadow(ThumbDefaultElevation, CircleShape, clip = false)
+                .background(Color.White, CircleShape)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(colors.thumbColor(false).value)
+                    .align(Alignment.Center)
+            ) {
+                Icon(
+                    painterResource(id = R.drawable.ic_baseline_arrow_back_24),
+                    contentDescription = null,
+                    tint = colors.inThumbColor,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp)
+                )
+            }
         }
     }
 }
@@ -409,11 +445,5 @@ private val ThumbPressedElevation = 6.dp
 
 // Internal to be referred to in tests
 internal val TrackHeight = 24.dp
-private val SliderHeight = 48.dp
-private val SliderMinWidth = 144.dp // TODO: clarify min width
-private val DefaultSliderConstraints =
-    Modifier
-        .widthIn(min = SliderMinWidth)
-        .heightIn(max = SliderHeight)
 
 internal val TickRadius = 4.dp
