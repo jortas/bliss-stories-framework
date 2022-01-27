@@ -115,7 +115,11 @@ dependencies {
     implementation "androidx.compose.runtime:runtime-rxjava2:$compose_version"
     implementation("androidx.compose.ui:ui-util:$compose_version")
     implementation ("androidx.compose.ui:ui-viewbinding:$compose_version")
-
+    implementation 'com.google.android.exoplayer:exoplayer:2.11.7'
+    //Try this sub packs
+    //implementation 'com.google.android.exoplayer:exoplayer-core:2.X.X'
+    //implementation 'com.google.android.exoplayer:exoplayer-dash:2.X.X'
+    //implementation 'com.google.android.exoplayer:exoplayer-ui:2.X.X'
     //Compose Constraintlayout
     implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.0-rc01'
 }

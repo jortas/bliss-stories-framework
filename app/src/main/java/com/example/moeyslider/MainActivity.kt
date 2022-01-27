@@ -2,10 +2,16 @@ package com.example.moeyslider
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -14,9 +20,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
-import com.example.moeyslider.slider.BlissSliderColors
-import com.example.moeyslider.slider.BlissSlider
-import com.google.android.material.slider.Slider
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,38 +37,27 @@ class MainActivity : AppCompatActivity() {
             setContent {
                 // In Compose world
                 MaterialTheme {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(8.dp)
+
                     ) {
 
                         val sliderValue = liveData.observeAsState(0f)
 
-                        Text(text = sliderValue.value.toString())
+                        val interactionSource = remember {
+                            MutableInteractionSource()
+                        }
 
-                        BlissSlider(
-                            value = sliderValue.value,
-                            onValueChange = { liveData.value = it },
-                            constructorValueRange = 0f..2f,
-                            values = listOf(0.1f, 0.4f, 0.5f, 1f, 2f),
-                            tutorialEnabled = true,
-                            colors =
-                            BlissSliderColors(
-                                thumbColor = blueColor,
-                                thumbDisabledColor = Color.Gray,
-                                inThumbColor = Color.White,
-                                trackBrush = Brush.horizontalGradient(
-                                    listOf(
-                                        blueColor, Color(0xFFAEB8BA)
-                                    ),
-                                    tileMode = TileMode.Clamp
-                                ),
-                                inactiveTrackColor = blueColor.copy(alpha = 0.1f),
-                                tickActiveColor = Color.White,
-                                tickInactiveColor = blueColor.copy(alpha = 0.3f)
-                            )
-                        )
+                        var enabled by remember { mutableStateOf(false) }
+
+                        val wasPressed = interactionSource.collectIsPressedAsState()
+
+                        if (!enabled && wasPressed.value){
+                            enabled = true
+                        }
+
                     }
                 }
             }

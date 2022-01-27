@@ -1,4 +1,4 @@
-package com.example.moeyslider.slider
+package pt.i9.app.ui.seek.i9slider
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable

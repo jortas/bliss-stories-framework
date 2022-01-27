@@ -1,9 +1,12 @@
-package com.example.moeyslider.slider
+package pt.i9.app.ui.seek.i9slider
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +14,7 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,64 +26,67 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.LocalDensity
-import com.example.moeyslider.R
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import com.example.moeyslider.*
-import com.example.moeyslider.CorrectValueSideEffect
-import com.example.moeyslider.SliderDraggableState
-import com.example.moeyslider.animateToTarget
-import com.example.moeyslider.snapValueToTick
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import java.lang.RuntimeException
+import com.example.moeyslider.R
+
+/*
+ Most of this code was copied from Google Compose Slider
+*/
 
 @Composable
 fun BlissSlider(
     modifier: Modifier = Modifier,
-    value: Float = 0f,
+    value: Float,
     onValueChange: (Float) -> Unit = {},
+    interactionSource: MutableInteractionSource = MutableInteractionSource(),
     enabled: Boolean = true,
-    constructorValueRange: ClosedFloatingPointRange<Float>? = 0f..1f,
+    valueRangeParam: ClosedFloatingPointRange<Float>? = null,
     steps: Int = 0,
-    values: List<Float> = valueRangeToDiscreteValues(constructorValueRange, steps),
-    onValueChangeFinished: (() -> Unit)? = null,
+    values: List<Float> = valueRangeToDiscreteValues(valueRangeParam, steps),
+    onValueChangeFinished: (() -> Unit) = {},
     tutorialEnabled: Boolean = false,
     colors: BlissSliderColors
 ) {
-    val interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 
     val onValueChangeState = rememberUpdatedState(onValueChange)
 
-    val valueRange = remember(values) {
+    val valueRange = remember(values, valueRangeParam) {
         if (values.isEmpty()) {
-            constructorValueRange!!
+            if (valueRangeParam == null) {
+                throw RuntimeException("Slider must contain values or/and a valueRange")
+            }
+            valueRangeParam
         } else {
-            var valuesRange = values.minOrNull()!!..values.maxOrNull()!!
-            constructorValueRange?.let {
-                if (!valuesRange.contains(it.start)) {
-                    valuesRange = it.start..valuesRange.endInclusive
+            var auxValueRange = values.minOrNull()!!..values.maxOrNull()!!
+            valueRangeParam?.let {
+                if (!auxValueRange.contains(it.start)) {
+                    auxValueRange = it.start..auxValueRange.endInclusive
                 }
-                if (!valuesRange.contains(it.endInclusive)) {
-                    valuesRange = valuesRange.start..it.endInclusive
+                if (!auxValueRange.contains(it.endInclusive)) {
+                    auxValueRange = auxValueRange.start..it.endInclusive
                 }
             }
-            valuesRange
+            auxValueRange
         }
     }
 
-    val ticks = remember(values) {
+    val ticks = remember(values, valueRange) {
         valuesToTickFractions(values, valueRange)
     }
 
     BoxWithConstraints(
         modifier
+            .wrapContentHeight()
             .requiredSizeIn(minHeight = ThumbRadius * 2)
             .sliderSemantics(value, ticks, enabled, onValueChange, valueRange, ticks.count())
-            .focusable(enabled, interactionSource)
+            .focusable(interactionSource = interactionSource)
     ) {
         val maxPx = constraints.maxWidth.toFloat()
         val minPx = 0f
@@ -107,21 +114,20 @@ fun BlissSlider(
             if (current != target) {
                 scope.launch {
                     animateToTarget(draggableState, current, target, velocity)
-                    onValueChangeFinished?.invoke()
+                    onValueChangeFinished.invoke()
                 }
             } else if (!draggableState.isDragging) {
                 // check ifDragging in case the change is still in progress (touch -> drag case)
-                onValueChangeFinished?.invoke()
+                onValueChangeFinished.invoke()
             }
         }
 
         val press = Modifier.sliderPressModifier(
-            draggableState, interactionSource, maxPx, rawOffset, gestureEndAction, enabled
+            draggableState, interactionSource, maxPx, rawOffset, gestureEndAction, true
         )
 
         val drag = Modifier.draggable(
             orientation = Orientation.Horizontal,
-            enabled = enabled,
             interactionSource = interactionSource,
             onDragStopped = { velocity -> gestureEndAction.value.invoke(velocity) },
             startDragImmediately = draggableState.isDragging,
@@ -150,12 +156,16 @@ private fun SliderImpl(
     enabled: Boolean,
     positionFraction: Float,
     tickFractions: List<Float>,
-    withTutorial: Boolean = false,
+    tutorialEnabled: Boolean = false,
     colors: BlissSliderColors,
     width: Float,
     interactionSource: MutableInteractionSource,
 ) {
-    Box(modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+    ) {
         val trackStrokeWidth: Float
         val tickRadius: Float
         val thumbRadius: Float
@@ -175,11 +185,11 @@ private fun SliderImpl(
             colors,
             positionFraction,
             thumbRadius,
-            trackStrokeWidth,
+            trackStrokeWidth
         )
 
         Ticks(
-            modifier = center.fillMaxSize(),
+            modifier = center,
             colors = colors,
             positionFractionEnd = positionFraction,
             tickFractions = tickFractions,
@@ -198,8 +208,8 @@ private fun SliderImpl(
             thumbSize
         )
 
-        if (withTutorial) {
-            val tutorialEndPosition = (widthDp - thumbSize) * 0.6f
+        if (!enabled && tutorialEnabled) {
+            val tutorialEndPosition = remember(widthDp) { (widthDp - thumbSize) * 0.6f }
 
             ThumbTutorial(
                 modifier = center,
@@ -282,7 +292,11 @@ private fun Track(
 
     val activeTrackBrush = colors.trackBrush(active = true)
     val inactiveTrackBrush = colors.trackBrush(active = false)
-    Canvas(modifier.fillMaxSize()) {
+    Canvas(
+        modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+    ) {
         val sliderLeft = Offset(thumbRadius, center.y)
         val sliderRight = Offset(size.width - thumbRadius, center.y)
 
@@ -303,6 +317,7 @@ private fun Track(
         modifier
             .padding(start = paddingInDp, end = paddingInDp)
             .fillMaxWidth(fraction = positionFractionEnd)
+            .wrapContentHeight()
     ) {
         val sliderLeft = Offset(0f, center.y)
         val sliderRight = Offset(size.width, center.y)
@@ -329,7 +344,9 @@ private fun Ticks(
     val inactiveColor = colors.tickColor(active = false)
     val activeColor = colors.tickColor(active = true)
 
-    Canvas(modifier) {
+    Canvas(modifier
+        .fillMaxWidth()
+        .wrapContentHeight()) {
         val isRtl = layoutDirection == LayoutDirection.Rtl
         val sliderLeft = Offset(thumbRadius, center.y)
         val sliderRight = Offset(size.width - thumbRadius, center.y)
@@ -364,7 +381,7 @@ private fun ThumbTutorial(
         initialValue = Pair(offset, 1f),
         targetValue = Pair(tutorialEndPosition, 0f),
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = LinearEasing),
+            animation = tween(1500, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
         typeConverter = TwoWayConverter(
@@ -396,7 +413,7 @@ private fun ThumbTutorial(
                     .align(Alignment.Center)
             ) {
                 Icon(
-                    painterResource(id = R.drawable.ic_baseline_arrow_back_24),
+                    painterResource(id =  R.drawable.ic_baseline_arrow_back_24),
                     contentDescription = null,
                     tint = colors.inThumbColor,
                     modifier = Modifier
@@ -438,12 +455,53 @@ private fun calcFraction(a: Float, b: Float, pos: Float) =
     (if (b - a == 0f) 0f else (pos - a) / (b - a)).coerceIn(0f, 1f)
 
 // Internal to be referred to in tests
-internal val ThumbRadius = 18.dp
+private val ThumbRadius = 18.dp
 private val ThumbRippleRadius = 24.dp
-private val ThumbDefaultElevation = 1.dp
+private val ThumbDefaultElevation = 4.dp
 private val ThumbPressedElevation = 6.dp
 
 // Internal to be referred to in tests
 internal val TrackHeight = 24.dp
 
 internal val TickRadius = 4.dp
+
+@Preview
+@Composable
+private fun BlissSliderPreview() {
+
+    val blissColors = BlissSliderColors(
+        thumbColor = Color.Blue,
+        thumbDisabledColor = Color.Gray,
+        inThumbColor = Color.Blue,
+        trackBrush = Brush.horizontalGradient(
+            listOf(
+                Color.Blue, Color(0xFFAEB8BA)
+            ),
+            tileMode = TileMode.Clamp
+        ),
+        inactiveTrackColor = Color.Blue.copy(alpha = 0.1f),
+        tickActiveColor = Color.Blue,
+        tickInactiveColor = Color.Blue.copy(alpha = 0.3f)
+    )
+
+    MaterialTheme {
+
+        var value by mutableStateOf(0f)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(8.dp)
+                .background(Color.White)
+
+        ) {
+            BlissSlider(
+                value = value,
+                values = listOf(0.2f,1f,0.4f),
+                onValueChange = {value = it},
+                colors = blissColors,
+                valueRangeParam = 0f..1f
+            )
+        }
+    }
+}
