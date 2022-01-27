@@ -16,7 +16,7 @@ import com.example.moeyslider.models.storyFactoryMock
 
 @Composable
 fun StoryFramework(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     stories: List<Story>
 ) {
     val currentStoryIndex by remember { mutableStateOf(0) }
@@ -28,4 +28,19 @@ fun StoryFramework(
         progressOfCurrentVideo = 0.7f
     )
 
+    VideoPlayer(
+        modifier = Modifier.fillMaxSize(),
+        link = stories.first().video.link
+    )
+}
+
+@Preview
+@Composable
+private fun StoryFrameworkPreview() {
+    MaterialTheme {
+        StoryFramework(
+            modifier = Modifier.fillMaxSize(),
+            stories = storyFactoryMock()
+        )
+    }
 }

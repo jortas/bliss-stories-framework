@@ -20,15 +20,15 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
-import com.example.moeyslider.i9stories.StoryFramework
-import com.example.moeyslider.models.storyFactoryMock
 
-class MainActivity : AppCompatActivity() {
+class SliderActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val composeView = this.findViewById<ComposeView>(R.id.composeView)
+        val liveData  = MutableLiveData(0f)
+        val blueColor = Color(0xFF71B9E3)
 
         composeView.apply {
             // Dispose the Composition when the view's LifecycleOwner
@@ -36,15 +36,28 @@ class MainActivity : AppCompatActivity() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 // In Compose world
-                // is destroyed
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setContent {
-                    // In Compose world
-                    MaterialTheme {
-                        StoryFramework(
-                            modifier = Modifier.fillMaxSize(),
-                            stories = storyFactoryMock()
-                        )
+                MaterialTheme {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+
+                    ) {
+
+                        val sliderValue = liveData.observeAsState(0f)
+
+                        val interactionSource = remember {
+                            MutableInteractionSource()
+                        }
+
+                        var enabled by remember { mutableStateOf(false) }
+
+                        val wasPressed = interactionSource.collectIsPressedAsState()
+
+                        if (!enabled && wasPressed.value){
+                            enabled = true
+                        }
+
                     }
                 }
             }
