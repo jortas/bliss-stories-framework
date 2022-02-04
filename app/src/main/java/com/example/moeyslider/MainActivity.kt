@@ -36,11 +36,8 @@ class MainActivity : AppCompatActivity() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 // In Compose world
-                // is destroyed
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setContent {
-                    // In Compose world
-                    MaterialTheme {
+                MaterialTheme {
+                    Box(Modifier.fillMaxSize()) {
                         StoryFramework(
                             modifier = Modifier.fillMaxSize(),
                             stories = storyFactoryMock()

@@ -11,19 +11,20 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ComposedStoryProgressBar(
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .height(16.dp),
+    modifier: Modifier = Modifier,
     @IntRange(from = 0) numberOfStories: Int,
     @IntRange(from = 0) currentVideoIndex: Int,
     @FloatRange(from = 0.0, to = 1.0) progressOfCurrentVideo: Float
 ) {
+    val storyIndicatorModifier = modifier
+        .fillMaxWidth()
+        .height(16.dp)
 
     if (currentVideoIndex >= numberOfStories) {
         throw RuntimeException("CurrentVideo Index $currentVideoIndex bigger than $numberOfStories")
     }
 
-    Row(modifier) {
+    Row(storyIndicatorModifier) {
         for (i in 0 until numberOfStories) {
 
             val progress = when {
@@ -32,14 +33,12 @@ fun ComposedStoryProgressBar(
                 i > currentVideoIndex -> 0f
                 else -> 0f//Impossible
             }
-            Column() {
                 StoryProgressBar(
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(1f / (numberOfStories - i)),
                     progress = progress
                 )
-            }
         }
     }
 }

@@ -45,7 +45,6 @@ fun StoryProgressBar(
     }
 }
 
-
 @Preview
 @Composable
 private fun BlissSliderPreview() {

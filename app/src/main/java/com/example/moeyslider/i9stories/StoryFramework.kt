@@ -11,36 +11,42 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.example.moeyslider.models.Story
 import com.example.moeyslider.models.storyFactoryMock
 
 @Composable
 fun StoryFramework(
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     stories: List<Story>
 ) {
     val currentStoryIndex by remember { mutableStateOf(0) }
     val currentVideoProgress by remember { mutableStateOf(0) }
 
-    ComposedStoryProgressBar(
-        numberOfStories = stories.size,
-        currentVideoIndex = currentStoryIndex,
-        progressOfCurrentVideo = 0.7f
-    )
-
-    VideoPlayer(
-        modifier = Modifier.fillMaxSize(),
-        link = stories.first().video.link
-    )
+    Box(modifier) {
+        ComposedStoryProgressBar(
+            modifier = Modifier.zIndex(2f).padding(2.dp),
+            numberOfStories = stories.size,
+            currentVideoIndex = currentStoryIndex,
+            progressOfCurrentVideo = 0.7f
+        )
+        VideoPlayer(
+            modifier = Modifier.fillMaxSize().zIndex(1f),
+            link = stories.first().video.link
+        )
+    }
 }
 
 @Preview
 @Composable
 private fun StoryFrameworkPreview() {
     MaterialTheme {
-        StoryFramework(
-            modifier = Modifier.fillMaxSize(),
-            stories = storyFactoryMock()
-        )
+        Box(Modifier.fillMaxSize()) {
+            StoryFramework(
+                modifier = Modifier.fillMaxSize(),
+                stories = storyFactoryMock()
+            )
+
+        }
     }
 }
