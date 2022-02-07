@@ -4,46 +4,56 @@ import android.content.Context
 import android.net.Uri
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.PlaybackParameters
-import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
+import kotlinx.coroutines.delay
 
 @Composable
 fun VideoPlayer(
     modifier: Modifier = Modifier,
-    link: Uri,
+    videoLinks: List<Uri>,
     thumbnail: Uri? = null,
-    state: VideoPlayerState = VideoPlayerState.Unknown,
-    onVideoChange: (Int) -> Unit = {}
+    state: VideoPlayerState = VideoPlayerState.Playing,
+    currentVideoIndex: Int,
+    onStateChange: (VideoPlayerState) -> Unit = {},
+    onVideoIndexChange: (Int) -> Unit = {},
+    onVideoProgressChange: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val mediaItem = remember {
-        MediaItem.fromUri(link)
+    val mediaItems = remember {
+        videoLinks.map { MediaItem.fromUri(it) }
     }
 
-    val exoPlayer = remember { createExoPlayer(context, mediaItem, onVideoChange) }
-    exoPlayer.playWhenReady = true
+    val exoPlayer =
+        remember { createExoPlayer(context, mediaItems, onStateChange, onVideoIndexChange) }
 
+    if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
+        exoPlayer.seekTo(currentVideoIndex, 0L)
+    }
+
+    remember(key1 = state) {
+        exoPlayer.playWhenReady = state == VideoPlayerState.Playing
+        1
+    }
+    LaunchedEffect(key1 = "init", block = {
+        while (true) {
+            onVideoProgressChange(exoPlayer.currentProgress())
+            delay(PROGRESS_REFRESH_DELAY_MS)
+        }
+    })
 
     // player view
     DisposableEffect(
         AndroidView(
             modifier = modifier
-                .fillMaxSize()
-                .clickable { exoPlayer.pause() },
+                .fillMaxSize(),
             factory = {
-                // exo player view for our video player
                 PlayerView(context).apply {
                     useController = false
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
@@ -60,13 +70,17 @@ fun VideoPlayer(
     }
 }
 
+private fun ExoPlayer.currentProgress() =
+    (currentPosition.toFloat() / duration.toFloat())
+
 private fun createExoPlayer(
     context: Context,
-    mediaItem: MediaItem,
-    onVideoChange: (Int) -> Unit
+    mediaItem: List<MediaItem>,
+    onStateChange: (VideoPlayerState) -> Unit = {},
+    onVideoChange: (Int) -> Unit,
 ): ExoPlayer {
     return ExoPlayer.Builder(context).build().apply {
-        this.setMediaItem(mediaItem)
+        this.setMediaItems(mediaItem)
         this.prepare()
         addListener(
             object : Player.Listener {
@@ -75,13 +89,13 @@ private fun createExoPlayer(
                     events: Player.Events
                 ) {
                     super.onEvents(player, events)
-                    if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)){
-
+                    if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) {
+                        if (player.isPlaying) {
+                            onStateChange(VideoPlayerState.Playing)
+                        } else {
+                            onStateChange(VideoPlayerState.Paused)
+                        }
                     }
-                }
-
-                override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
-                    super.onPlaybackParametersChanged(playbackParameters)
                 }
 
                 override fun onMediaItemTransition(
@@ -94,9 +108,8 @@ private fun createExoPlayer(
                     )
                     // everytime media item changes notify playlist about current playing
                     onVideoChange(
-                        this@apply.currentPeriodIndex
+                        this@apply.currentMediaItemIndex
                     )
-                    // everytime the media item changes show the title
                 }
             }
         )
@@ -106,3 +119,5 @@ private fun createExoPlayer(
 enum class VideoPlayerState() {
     Playing, Paused, Unknown
 }
+
+private const val PROGRESS_REFRESH_DELAY_MS = 20L

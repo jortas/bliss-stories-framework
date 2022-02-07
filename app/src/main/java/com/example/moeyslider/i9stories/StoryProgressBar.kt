@@ -1,14 +1,14 @@
 package com.example.moeyslider.i9stories
 
 import androidx.annotation.FloatRange
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -26,6 +26,18 @@ fun StoryProgressBar(
 ) {
 
     val shape = RoundedCornerShape(8.dp)
+    val firstLaunch = true
+    val visualProgress = remember { Animatable(progress) }
+
+    LaunchedEffect(firstLaunch) { // (2)
+        visualProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = (200 * (1f - visualProgress.value)).toInt(),
+                easing = LinearEasing
+            )
+        )
+    }
 
     Box(
         modifier = modifier

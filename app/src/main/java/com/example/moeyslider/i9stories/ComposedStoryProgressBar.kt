@@ -18,7 +18,7 @@ fun ComposedStoryProgressBar(
 ) {
     val storyIndicatorModifier = modifier
         .fillMaxWidth()
-        .height(16.dp)
+        .height(8.dp)
 
     if (currentVideoIndex >= numberOfStories) {
         throw RuntimeException("CurrentVideo Index $currentVideoIndex bigger than $numberOfStories")
@@ -27,10 +27,9 @@ fun ComposedStoryProgressBar(
     Row(storyIndicatorModifier) {
         for (i in 0 until numberOfStories) {
 
-            val progress = when {
-                i < currentVideoIndex -> 1f
-                i == currentVideoIndex -> 0.5f
-                i > currentVideoIndex -> 0f
+            val progress = when(i) {
+                in 0 until currentVideoIndex -> 1f
+                currentVideoIndex -> progressOfCurrentVideo
                 else -> 0f//Impossible
             }
                 StoryProgressBar(
