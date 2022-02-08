@@ -55,6 +55,7 @@ fun VideoPlayer(
                 .fillMaxSize(),
             factory = {
                 PlayerView(context).apply {
+                    setKeepContentOnPlayerReset(true)
                     useController = false
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                     player = exoPlayer
@@ -120,4 +121,4 @@ enum class VideoPlayerState() {
     Playing, Paused, Unknown
 }
 
-private const val PROGRESS_REFRESH_DELAY_MS = 20L
+private const val PROGRESS_REFRESH_DELAY_MS = 200L

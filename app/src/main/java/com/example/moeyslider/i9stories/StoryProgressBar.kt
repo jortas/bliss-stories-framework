@@ -1,8 +1,8 @@
 package com.example.moeyslider.i9stories
 
 import androidx.annotation.FloatRange
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,38 +10,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import pt.i9.app.ui.seek.i9slider.BlissSlider
-import pt.i9.app.ui.seek.i9slider.BlissSliderColors
 
 @Composable
 fun StoryProgressBar(
     modifier: Modifier,
     @FloatRange(from = 0.0, to = 1.0) progress: Float
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(
+            durationMillis = getAnimationSpeed(progress),
+            easing = LinearEasing
+        )
+    )
 
     val shape = RoundedCornerShape(8.dp)
-    val firstLaunch = true
-    val visualProgress = remember { Animatable(progress) }
-
-    LaunchedEffect(firstLaunch) { // (2)
-        visualProgress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = (200 * (1f - visualProgress.value)).toInt(),
-                easing = LinearEasing
-            )
-        )
-    }
 
     Box(
         modifier = modifier
-            .padding(2.dp)
+            .padding(1.dp)
             .background(
                 Color.Gray, shape
             )
@@ -49,7 +39,7 @@ fun StoryProgressBar(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(progress)
+                .fillMaxWidth(animatedProgress)
                 .background(
                     Color.White, shape
                 )
@@ -75,3 +65,15 @@ private fun BlissSliderPreview() {
         }
     }
 }
+
+private fun getAnimationSpeed(progress: Float): Int {
+    return if (progress == 0f) {
+        0
+    } else if (progress == 1f) {
+        100
+    } else {
+        PROGRESS_ANIMATION_DURATION_MS
+    }
+}
+
+private const val PROGRESS_ANIMATION_DURATION_MS = 200

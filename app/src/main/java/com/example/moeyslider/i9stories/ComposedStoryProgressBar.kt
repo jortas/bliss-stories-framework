@@ -2,9 +2,11 @@ package com.example.moeyslider.i9stories
 
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -18,7 +20,7 @@ fun ComposedStoryProgressBar(
 ) {
     val storyIndicatorModifier = modifier
         .fillMaxWidth()
-        .height(8.dp)
+        .height(4.dp)
 
     if (currentVideoIndex >= numberOfStories) {
         throw RuntimeException("CurrentVideo Index $currentVideoIndex bigger than $numberOfStories")
@@ -30,7 +32,7 @@ fun ComposedStoryProgressBar(
             val progress = when(i) {
                 in 0 until currentVideoIndex -> 1f
                 currentVideoIndex -> progressOfCurrentVideo
-                else -> 0f//Impossible
+                else -> 0f
             }
                 StoryProgressBar(
                     modifier = Modifier

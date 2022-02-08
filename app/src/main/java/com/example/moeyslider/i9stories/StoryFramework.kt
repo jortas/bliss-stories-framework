@@ -1,19 +1,27 @@
 package com.example.moeyslider.i9stories
 
+import android.util.Log
 import androidx.compose.foundation.gestures.GestureCancellationException
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.moeyslider.models.Story
 import com.example.moeyslider.models.storyFactoryMock
 import java.lang.RuntimeException
+import kotlin.math.ln
+import kotlin.math.log
+import kotlin.math.tanh
 
 @Composable
 fun StoryFramework(
@@ -26,14 +34,30 @@ fun StoryFramework(
         val constraintScope = this
 
         var currentStoryIndex by remember { mutableStateOf(0) }
-        var currentVideoProgress by remember { mutableStateOf(0.7f) }
+        var currentVideoProgress by remember { mutableStateOf(0.0f) }
+
+        var totalDragAmount by remember { mutableStateOf(100f) }
 
         var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
 
         val newModifier = remember(modifier) {
-            Modifier
-                .fillMaxSize()
+            modifier
                 .pointerInput(Unit) {
+                    this.forEachGesture {
+                        awaitPointerEventScope {
+                            this.
+                        }
+
+                    }
+                    detectVerticalDragGestures(
+                        onDragStart = { totalDragAmount = 0f },
+                        onDragEnd = { totalDragAmount = 0f }
+                    )
+                    { change, dragAmount ->
+                        totalDragAmount = kotlin.math.max(totalDragAmount + dragAmount, 0f)
+
+                        Log.d("JORTAS", "$change && $dragAmount")
+                    }
                     detectTapGestures(
                         onPress = {
                             playerState = VideoPlayerState.Paused
@@ -53,6 +77,7 @@ fun StoryFramework(
                                             backStorySetAction()
                                         } else {
                                             currentStoryIndex--
+                                            currentVideoProgress = 0f
                                         }
                                     }
                                     TapType.ShortCenter,
@@ -61,24 +86,40 @@ fun StoryFramework(
                                             backStorySetAction()
                                         } else {
                                             currentStoryIndex++
+                                            currentVideoProgress = 0f
                                         }
                                     }
                                     TapType.Long -> 1 + 1;//TODO()
                                 }
                                 playerState = VideoPlayerState.Playing
                             } catch (e: GestureCancellationException) { //Motion was used
-
+                                playerState = VideoPlayerState.Playing
                             }
                         }
                     )
                 }
         }
 
-        fun s(progress: Float) {
-            currentVideoProgress = progress
+        val totalDragAmountDp: Dp
+        val proportion = remember(maxHeight, maxWidth) { maxHeight/maxWidth }
+
+        with(LocalDensity.current) {
+            totalDragAmountDp = remember(totalDragAmount) {
+                val x = totalDragAmount.toDp().value.toFloat()
+                (tanh(x / (maxHeight.value - maxHeight.value/Math.E)) * (maxHeight.value - maxHeight.value/1.612f)).dp
+            }
         }
 
-        Box(newModifier) {
+        Box(
+            newModifier
+                .padding(
+                    top = totalDragAmountDp,
+                    start = totalDragAmountDp / proportion /20,
+                    end = totalDragAmountDp / proportion/20
+                )
+                .defaultMinSize(maxWidth, maxHeight)
+
+        ) {
             ComposedStoryProgressBar(
                 modifier = Modifier
                     .zIndex(2f)
@@ -95,7 +136,10 @@ fun StoryFramework(
                 state = playerState,
                 currentVideoIndex = currentStoryIndex,
                 onStateChange = { newState -> playerState = newState },
-                onVideoIndexChange = { currentStoryIndex = it },
+                onVideoIndexChange = {
+                    currentStoryIndex = it
+                    currentVideoProgress = 0f
+                },
                 onVideoProgressChange = {
                     currentVideoProgress = it
                 },
@@ -130,7 +174,7 @@ private fun StoryFrameworkPreview() {
     MaterialTheme {
         Box(Modifier.fillMaxSize()) {
             StoryFramework(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier,
                 storySet = storyFactoryMock(), {}, {}
             )
 
