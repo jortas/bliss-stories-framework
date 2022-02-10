@@ -1,16 +1,13 @@
 package com.example.moeyslider.i9stories
 
 import android.util.Log
-import androidx.compose.foundation.gestures.GestureCancellationException
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.gestures.forEachGesture
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -18,9 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.moeyslider.models.Story
 import com.example.moeyslider.models.storyFactoryMock
+import com.google.common.primitives.Floats.max
 import java.lang.RuntimeException
-import kotlin.math.ln
-import kotlin.math.log
+import kotlin.math.abs
 import kotlin.math.tanh
 
 @Composable
@@ -28,7 +25,8 @@ fun StoryFramework(
     modifier: Modifier,
     storySet: List<Story>,
     backStorySetAction: () -> Unit,
-    finishedStorySetAction: () -> Unit
+    finishedStorySetAction: () -> Unit,
+    dismissStories: () -> Unit = {}
 ) {
     BoxWithConstraints(modifier) {
         val constraintScope = this
@@ -36,86 +34,72 @@ fun StoryFramework(
         var currentStoryIndex by remember { mutableStateOf(0) }
         var currentVideoProgress by remember { mutableStateOf(0.0f) }
 
-        var totalDragAmount by remember { mutableStateOf(100f) }
+        var totalVerticalDragAmount by remember { mutableStateOf(0f) }
 
         var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
+        var tapEvent: Offset? by remember { mutableStateOf(null) }
 
-        val newModifier = remember(modifier) {
-            modifier
-                .pointerInput(Unit) {
-                    this.forEachGesture {
-                        awaitPointerEventScope {
-                            this.
-                        }
-
-                    }
-                    detectVerticalDragGestures(
-                        onDragStart = { totalDragAmount = 0f },
-                        onDragEnd = { totalDragAmount = 0f }
-                    )
-                    { change, dragAmount ->
-                        totalDragAmount = kotlin.math.max(totalDragAmount + dragAmount, 0f)
-
-                        Log.d("JORTAS", "$change && $dragAmount")
-                    }
-                    detectTapGestures(
-                        onPress = {
-                            playerState = VideoPlayerState.Paused
-                            try {
-                                val pressStartTime = System.currentTimeMillis()
-                                awaitRelease()
-                                val pressEndTime = System.currentTimeMillis()
-                                val totalPressTime = pressEndTime - pressStartTime
-                                val tapType = getTapType(
-                                    pressedTime = totalPressTime,
-                                    tapPosition = it,
-                                    width = constraintScope.maxWidth.toPx()
-                                )
-                                when (tapType) {
-                                    TapType.ShortLeft -> {
-                                        if (currentStoryIndex == 0) {
-                                            backStorySetAction()
-                                        } else {
-                                            currentStoryIndex--
-                                            currentVideoProgress = 0f
-                                        }
-                                    }
-                                    TapType.ShortCenter,
-                                    TapType.ShortRight -> {
-                                        if (currentStoryIndex == storySet.size) {
-                                            backStorySetAction()
-                                        } else {
-                                            currentStoryIndex++
-                                            currentVideoProgress = 0f
-                                        }
-                                    }
-                                    TapType.Long -> 1 + 1;//TODO()
-                                }
-                                playerState = VideoPlayerState.Playing
-                            } catch (e: GestureCancellationException) { //Motion was used
-                                playerState = VideoPlayerState.Playing
-                            }
-                        }
-                    )
+        val newModifier = remember() {
+            Modifier.addMultipleGestures(
+                onGestureStart = {
+                    playerState = VideoPlayerState.Paused
+                    totalVerticalDragAmount = 0f
+                },
+                onGestureEnd = { playerState = VideoPlayerState.Playing },
+                onPress = { tapEvent = it },
+                onVerticalDrag = { totalVerticalDragAmount = max(0f, it) },
+                onVerticalDragEnd = {
+                    totalVerticalDragAmount = 0f
+                    dismissStories()
                 }
+            )
         }
 
-        val totalDragAmountDp: Dp
-        val proportion = remember(maxHeight, maxWidth) { maxHeight/maxWidth }
 
-        with(LocalDensity.current) {
-            totalDragAmountDp = remember(totalDragAmount) {
-                val x = totalDragAmount.toDp().value.toFloat()
-                (tanh(x / (maxHeight.value - maxHeight.value/Math.E)) * (maxHeight.value - maxHeight.value/1.612f)).dp
+        Log.d("JORT", "${tapEvent.hashCode()}")
+        key(tapEvent.hashCode()) {
+            Log.d("JORT", "${tapEvent.hashCode()}")
+            val tapType = tapEvent?.let {
+                with(LocalDensity.current) {
+                    getTapType(
+                        tapPosition = it,
+                        width = constraintScope.maxWidth.toPx() //todo to px
+                    )
+                }
             }
+            when (tapType) {
+                TapType.ShortLeft -> {
+                    if (currentStoryIndex == 0) {
+                        backStorySetAction()
+                    } else {
+                        currentStoryIndex--
+                        currentVideoProgress = 0f
+                    }
+                }
+                TapType.ShortCenter,
+                TapType.ShortRight -> {
+                    if (currentStoryIndex == storySet.lastIndex) {
+                        backStorySetAction()
+                    } else {
+                        currentStoryIndex++
+                        currentVideoProgress = 0f
+                    }
+                }
+            }
+        }
+        val proportion = remember(maxHeight, maxWidth) { maxHeight / maxWidth }
+
+        val totalDragAmountDp = remember(totalVerticalDragAmount) {
+            val x = totalVerticalDragAmount//.toDp().value.toFloat()
+            (tanh(x / (maxHeight.value - maxHeight.value / Math.E)) * (maxHeight.value - maxHeight.value / 1.612f)).dp
         }
 
         Box(
             newModifier
                 .padding(
                     top = totalDragAmountDp,
-                    start = totalDragAmountDp / proportion /20,
-                    end = totalDragAmountDp / proportion/20
+                    start = totalDragAmountDp / proportion / 20,
+                    end = totalDragAmountDp / proportion / 20
                 )
                 .defaultMinSize(maxWidth, maxHeight)
 
@@ -133,15 +117,15 @@ fun StoryFramework(
                 modifier = Modifier
                     .fillMaxSize()
                     .zIndex(1f),
-                state = playerState,
+                //   state = playerState,
                 currentVideoIndex = currentStoryIndex,
-                onStateChange = { newState -> playerState = newState },
+                onStateChange = { },//newState -> playerState = newState },
                 onVideoIndexChange = {
-                    currentStoryIndex = it
-                    currentVideoProgress = 0f
+                    //currentStoryIndex = it
+                    //  currentVideoProgress = 0f
                 },
                 onVideoProgressChange = {
-                    currentVideoProgress = it
+                    // currentVideoProgress = it
                 },
                 videoLinks = storySet.map { it.video.link },
             )
@@ -149,22 +133,78 @@ fun StoryFramework(
     }
 }
 
+private fun Modifier.addMultipleGestures(
+    onGestureStart: () -> Unit = {},
+    onGestureEnd: () -> Unit = {},
+    onPress: (Offset) -> Unit = {},
+    onLongPress: (Offset) -> Unit = {},
+    onVerticalDrag: (Float) -> Unit = {},
+    onVerticalDragEnd: () -> Unit = {},
+    onHorizontalDrag: (Float) -> Unit = {},
+    onHorizontalDragEnd: () -> Unit = {}
+): Modifier {
+    return this
+        .pointerInput(Unit) {
+            this.forEachGesture {
+                awaitPointerEventScope {
+                    val firstTouchPointer = awaitFirstDown(requireUnconsumed = false)
+                    onGestureStart()
+                    val pressStartTime = System.currentTimeMillis()
+                    var pointer: PointerInputChange?
+                    var drag = Offset.Zero
+                    var totalDragWithDirection: Float
+
+                    do {
+                        pointer = awaitDragOrCancellation(firstTouchPointer.id)
+                        pointer?.let {
+                            drag += it.positionChangeIgnoreConsumed()
+                        }
+                    } while (abs(drag.x) < PRESS_SAFE_ZONE && abs(drag.y) < PRESS_SAFE_ZONE && pointer != null)
+
+                    val pressedTime = System.currentTimeMillis() - pressStartTime
+                    if (pointer == null && pressedTime < MAX_TIME_TAP_MS) {
+                        onPress(firstTouchPointer.position)
+                    } else if (pointer == null && pressedTime > MAX_TIME_TAP_MS) {
+                        onLongPress(firstTouchPointer.position)
+                    } else if (pointer != null && abs(drag.x) < abs(drag.y)) {
+                        totalDragWithDirection = drag.y
+                        onVerticalDrag(totalDragWithDirection)
+                        do {
+                            pointer = awaitVerticalDragOrCancellation(firstTouchPointer.id)
+                            pointer?.let {
+                                totalDragWithDirection += it.positionChange().y
+                                onVerticalDrag(totalDragWithDirection)
+                            }
+                        } while (pointer != null)
+                        onVerticalDragEnd()
+                    } else if (pointer != null && abs(drag.x) >= abs(drag.y)) {
+                        totalDragWithDirection = drag.x
+                        onHorizontalDrag(totalDragWithDirection)
+                        do {
+                            pointer = awaitVerticalDragOrCancellation(firstTouchPointer.id)
+                            pointer?.let {
+                                totalDragWithDirection += it.positionChange().x
+                                onHorizontalDrag(totalDragWithDirection)
+                            }
+                        } while (pointer != null)
+                        onHorizontalDragEnd()
+                    }
+                }
+                onGestureEnd()
+            }
+        }
+}
 
 private fun getTapType(
-    pressedTime: Long,
     tapPosition: Offset,
     width: Float
 ): TapType {
     val quarterOfWidth = width / 4f
-    return if (pressedTime < MAX_TIME_TAP_MS) {
-        return when (tapPosition.x) {
-            in 0f..quarterOfWidth -> TapType.ShortLeft
-            in quarterOfWidth..(width - quarterOfWidth) -> TapType.ShortCenter
-            in (width - quarterOfWidth)..width -> TapType.ShortRight
-            else -> throw RuntimeException("Something went wrong detecting tap type, this state should be impossible")
-        }
-    } else {
-        TapType.Long
+    return when (tapPosition.x) {
+        in 0f..quarterOfWidth -> TapType.ShortLeft
+        in quarterOfWidth..(width - quarterOfWidth) -> TapType.ShortCenter
+        in (width - quarterOfWidth)..width -> TapType.ShortRight
+        else -> throw RuntimeException("Something went wrong detecting tap type, this state should be impossible")
     }
 }
 
@@ -182,6 +222,7 @@ private fun StoryFrameworkPreview() {
     }
 }
 
+private const val PRESS_SAFE_ZONE = 30f
 private const val MAX_TIME_TAP_MS = 200
 
 enum class TapType {
