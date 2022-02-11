@@ -28,16 +28,19 @@ fun StoryFramework(
     finishedStorySetAction: () -> Unit,
     dismissStories: () -> Unit = {}
 ) {
-    BoxWithConstraints(modifier) {
+    val maxHeight = 1000.dp
+    val maxWidth = 2000.dp
+    var currentStoryIndex by remember { mutableStateOf(0) }
+    var currentVideoProgress by remember { mutableStateOf(0.0f) }
+
+    var totalVerticalDragAmount by remember { mutableStateOf(0f) }
+
+    var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
+    var tapEvent: Offset? by remember { mutableStateOf(null) }
+
+    BoxWithConstraints(Modifier.size(300.dp)) {
         val constraintScope = this
-
-        var currentStoryIndex by remember { mutableStateOf(0) }
-        var currentVideoProgress by remember { mutableStateOf(0.0f) }
-
-        var totalVerticalDragAmount by remember { mutableStateOf(0f) }
-
-        var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
-        var tapEvent: Offset? by remember { mutableStateOf(null) }
+        val localDensity = LocalDensity.current
 
         val newModifier = remember() {
             Modifier.addMultipleGestures(
@@ -55,12 +58,10 @@ fun StoryFramework(
             )
         }
 
-
-        Log.d("JORT", "${tapEvent.hashCode()}")
-        key(tapEvent.hashCode()) {
+        currentStoryIndex = remember(tapEvent) {
             Log.d("JORT", "${tapEvent.hashCode()}")
             val tapType = tapEvent?.let {
-                with(LocalDensity.current) {
+                with(localDensity) {
                     getTapType(
                         tapPosition = it,
                         width = constraintScope.maxWidth.toPx() //todo to px
@@ -72,8 +73,8 @@ fun StoryFramework(
                     if (currentStoryIndex == 0) {
                         backStorySetAction()
                     } else {
-                        currentStoryIndex--
                         currentVideoProgress = 0f
+                        return@remember currentStoryIndex - 1
                     }
                 }
                 TapType.ShortCenter,
@@ -81,11 +82,12 @@ fun StoryFramework(
                     if (currentStoryIndex == storySet.lastIndex) {
                         backStorySetAction()
                     } else {
-                        currentStoryIndex++
                         currentVideoProgress = 0f
+                        return@remember currentStoryIndex + 1
                     }
                 }
             }
+            return@remember currentStoryIndex
         }
         val proportion = remember(maxHeight, maxWidth) { maxHeight / maxWidth }
 
@@ -117,15 +119,15 @@ fun StoryFramework(
                 modifier = Modifier
                     .fillMaxSize()
                     .zIndex(1f),
-                //   state = playerState,
+                state = playerState,
                 currentVideoIndex = currentStoryIndex,
-                onStateChange = { },//newState -> playerState = newState },
+                onStateChange = { newState -> playerState = newState },
                 onVideoIndexChange = {
-                    //currentStoryIndex = it
-                    //  currentVideoProgress = 0f
+                    currentStoryIndex = it
+                    currentVideoProgress = 0f
                 },
                 onVideoProgressChange = {
-                    // currentVideoProgress = it
+                    currentVideoProgress = it
                 },
                 videoLinks = storySet.map { it.video.link },
             )
@@ -189,8 +191,8 @@ private fun Modifier.addMultipleGestures(
                         } while (pointer != null)
                         onHorizontalDragEnd()
                     }
+                    onGestureEnd()
                 }
-                onGestureEnd()
             }
         }
 }

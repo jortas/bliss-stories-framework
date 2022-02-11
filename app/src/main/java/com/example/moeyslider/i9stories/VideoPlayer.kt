@@ -33,8 +33,10 @@ fun VideoPlayer(
     val exoPlayer =
         remember { createExoPlayer(context, mediaItems, onStateChange, onVideoIndexChange) }
 
-    if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
-        exoPlayer.seekTo(currentVideoIndex, 0L)
+    key(currentVideoIndex) {
+        if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
+            exoPlayer.seekTo(currentVideoIndex, 0L)
+        }
     }
 
     remember(key1 = state) {
