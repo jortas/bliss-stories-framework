@@ -1,20 +1,20 @@
 package com.example.moeyslider.i9stories
 
 import android.util.Log
+import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.moeyslider.models.Story
-import com.example.moeyslider.models.storyFactoryMock
 import com.google.common.primitives.Floats.max
 import java.lang.RuntimeException
 import kotlin.math.abs
@@ -23,114 +23,149 @@ import kotlin.math.tanh
 @Composable
 fun StoryFramework(
     modifier: Modifier,
+    initialShape: Shape,
+    initialSize: Size,
     storySet: List<Story>,
-    backStorySetAction: () -> Unit,
+    close: () -> Unit,
     finishedStorySetAction: () -> Unit,
     dismissStories: () -> Unit = {}
 ) {
-    val maxHeight = 1000.dp
-    val maxWidth = 2000.dp
-    var currentStoryIndex by remember { mutableStateOf(0) }
-    var currentVideoProgress by remember { mutableStateOf(0.0f) }
+    var justLaunched by remember { mutableStateOf(true) }
+    var closeEvent by remember { mutableStateOf(false) }
+    var gestureEndEvent by remember { mutableStateOf(false) }
 
-    var totalVerticalDragAmount by remember { mutableStateOf(0f) }
 
-    var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
-    var tapEvent: Offset? by remember { mutableStateOf(null) }
-
-    BoxWithConstraints(Modifier.size(300.dp)) {
-        val constraintScope = this
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         val localDensity = LocalDensity.current
-
-        val newModifier = remember() {
-            Modifier.addMultipleGestures(
-                onGestureStart = {
-                    playerState = VideoPlayerState.Paused
-                    totalVerticalDragAmount = 0f
-                },
-                onGestureEnd = { playerState = VideoPlayerState.Playing },
-                onPress = { tapEvent = it },
-                onVerticalDrag = { totalVerticalDragAmount = max(0f, it) },
-                onVerticalDragEnd = {
-                    totalVerticalDragAmount = 0f
-                    dismissStories()
-                }
-            )
-        }
-
-        currentStoryIndex = remember(tapEvent) {
-            Log.d("JORT", "${tapEvent.hashCode()}")
-            val tapType = tapEvent?.let {
-                with(localDensity) {
-                    getTapType(
-                        tapPosition = it,
-                        width = constraintScope.maxWidth.toPx() //todo to px
-                    )
-                }
-            }
-            when (tapType) {
-                TapType.ShortLeft -> {
-                    if (currentStoryIndex == 0) {
-                        backStorySetAction()
-                    } else {
-                        currentVideoProgress = 0f
-                        return@remember currentStoryIndex - 1
+        var size = with(localDensity) {
+            animateSizeAsState(
+                targetValue = if (justLaunched || closeEvent) initialSize else Size(
+                    maxWidth.toPx(),
+                    maxHeight.toPx()
+                ), finishedListener = { size ->
+                    if (closeEvent) {
+                        close()
                     }
-                }
-                TapType.ShortCenter,
-                TapType.ShortRight -> {
-                    if (currentStoryIndex == storySet.lastIndex) {
-                        backStorySetAction()
-                    } else {
-                        currentVideoProgress = 0f
-                        return@remember currentStoryIndex + 1
-                    }
-                }
+                })
+        }
+
+        LaunchedEffect("init") {
+            justLaunched = false
+        }
+
+
+        LaunchedEffect(gestureEndEvent) {
+            if (gestureEndEvent )= true){
+
             }
-            return@remember currentStoryIndex
-        }
-        val proportion = remember(maxHeight, maxWidth) { maxHeight / maxWidth }
-
-        val totalDragAmountDp = remember(totalVerticalDragAmount) {
-            val x = totalVerticalDragAmount//.toDp().value.toFloat()
-            (tanh(x / (maxHeight.value - maxHeight.value / Math.E)) * (maxHeight.value - maxHeight.value / 1.612f)).dp
         }
 
-        Box(
-            newModifier
-                .padding(
-                    top = totalDragAmountDp,
-                    start = totalDragAmountDp / proportion / 20,
-                    end = totalDragAmountDp / proportion / 20
+
+        var currentStoryIndex by remember { mutableStateOf(0) }
+        var currentVideoProgress by remember { mutableStateOf(0.0f) }
+
+        var totalVerticalDragAmount by remember { mutableStateOf(0f) }
+
+        var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
+        var tapEvent: Offset? by remember { mutableStateOf(null) }
+
+        BoxWithConstraints(Modifier.size(size.value.width.dp, size.value.height.dp)) {
+            val constraintScope = this
+            val localDensity = LocalDensity.current
+
+            val newModifier = remember() {
+                Modifier.addMultipleGestures(
+                    onGestureStart = {
+                        playerState = VideoPlayerState.Paused
+                        totalVerticalDragAmount = 0f
+                    },
+                    onGestureEnd = {
+                        playerState = VideoPlayerState.Playing
+                        gestureEndEvent = true
+                    },
+                    onPress = { tapEvent = it },
+                    onVerticalDrag = { totalVerticalDragAmount = max(0f, it) },
+                    onVerticalDragEnd = {
+                        totalVerticalDragAmount = 0f
+                        dismissStories()
+                    }
                 )
-                .defaultMinSize(maxWidth, maxHeight)
+            }
 
-        ) {
-            ComposedStoryProgressBar(
-                modifier = Modifier
-                    .zIndex(2f)
-                    .padding(2.dp),
-                numberOfStories = storySet.size,
-                currentVideoIndex = currentStoryIndex,
-                progressOfCurrentVideo = currentVideoProgress
-            )
+            currentStoryIndex = remember(tapEvent) {
+                Log.d("JORT", "${tapEvent.hashCode()}")
+                val tapType = tapEvent?.let {
+                    with(localDensity) {
+                        getTapType(
+                            tapPosition = it,
+                            width = constraintScope.maxWidth.toPx() //todo to px
+                        )
+                    }
+                }
+                when (tapType) {
+                    TapType.ShortLeft -> {
+                        if (currentStoryIndex == 0) {
+                            closeEvent = true
+                        } else {
+                            currentVideoProgress = 0f
+                            return@remember currentStoryIndex - 1
+                        }
+                    }
+                    TapType.ShortCenter,
+                    TapType.ShortRight -> {
+                        if (currentStoryIndex == storySet.lastIndex) {
+                            closeEvent = true
+                        } else {
+                            currentVideoProgress = 0f
+                            return@remember currentStoryIndex + 1
+                        }
+                    }
+                }
+                return@remember currentStoryIndex
+            }
+            val proportion = remember(maxHeight, maxWidth) { maxHeight / maxWidth }
 
-            VideoPlayer(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f),
-                state = playerState,
-                currentVideoIndex = currentStoryIndex,
-                onStateChange = { newState -> playerState = newState },
-                onVideoIndexChange = {
-                    currentStoryIndex = it
-                    currentVideoProgress = 0f
-                },
-                onVideoProgressChange = {
-                    currentVideoProgress = it
-                },
-                videoLinks = storySet.map { it.video.link },
-            )
+            val totalDragAmountDp = remember(totalVerticalDragAmount) {
+                val x = totalVerticalDragAmount//.toDp().value.toFloat()
+                (tanh(x / (maxHeight.value - maxHeight.value / Math.E)) * (maxHeight.value - maxHeight.value / 1.612f)).dp
+            }
+
+            Box(
+                newModifier
+                    .padding(
+                        top = totalDragAmountDp,
+                        start = totalDragAmountDp / proportion / 20,
+                        end = totalDragAmountDp / proportion / 20
+                    )
+                    .defaultMinSize(maxWidth, maxHeight)
+
+            ) {
+                ComposedStoryProgressBar(
+                    modifier = Modifier
+                        .zIndex(2f)
+                        .padding(2.dp),
+                    numberOfStories = storySet.size,
+                    currentVideoIndex = currentStoryIndex,
+                    progressOfCurrentVideo = currentVideoProgress
+                )
+
+                VideoPlayer(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(1f),
+                    state = playerState,
+                    currentVideoIndex = currentStoryIndex,
+                    onStateChange = { newState -> playerState = newState },
+                    onVideoIndexChange = {
+                        currentStoryIndex = it
+                        currentVideoProgress = 0f
+                    },
+                    onVideoProgressChange = {
+                        currentVideoProgress = it
+                    },
+                    videoLinks = storySet.map { it.video.link },
+                )
+            }
         }
     }
 }
@@ -210,19 +245,6 @@ private fun getTapType(
     }
 }
 
-@Preview
-@Composable
-private fun StoryFrameworkPreview() {
-    MaterialTheme {
-        Box(Modifier.fillMaxSize()) {
-            StoryFramework(
-                modifier = Modifier,
-                storySet = storyFactoryMock(), {}, {}
-            )
-
-        }
-    }
-}
 
 private const val PRESS_SAFE_ZONE = 30f
 private const val MAX_TIME_TAP_MS = 200

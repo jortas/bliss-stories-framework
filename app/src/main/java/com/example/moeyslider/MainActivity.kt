@@ -3,12 +3,22 @@ package com.example.moeyslider
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import com.example.moeyslider.i9stories.StoryFramework
 import com.example.moeyslider.models.storyFactoryMock
+import com.example.moeyslider.utills.ButtonForStory
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,15 +32,30 @@ class MainActivity : AppCompatActivity() {
             // is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+                val widthButton = 30.dp
+                val heightButton = 60.dp
                 // In Compose world
                 MaterialTheme {
-                    Box(Modifier.fillMaxSize()) {
-                        StoryFramework(
-                            modifier = Modifier.fillMaxSize(),
-                            storySet = storyFactoryMock(),
-                            {},
-                            {}
+                    var open by remember {
+                        mutableStateOf(false)
+                    }
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        val shape = RoundedCornerShape(4.dp)
+                        ButtonForStory(
+                            shape = RectangleShape,
+                            modifier = Modifier.size(widthButton, heightButton),
+                            onClick = { open = true }
                         )
+                        if (open) {
+                            StoryFramework(
+                                initialShape = RectangleShape,
+                                initialSize = Size(widthButton.value, heightButton.value),
+                                modifier = Modifier.fillMaxSize(),
+                                storySet = storyFactoryMock(),
+                                close = {open = false},
+                                finishedStorySetAction = {}
+                            )
+                        }
                     }
                 }
             }
