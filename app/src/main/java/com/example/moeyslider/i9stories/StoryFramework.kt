@@ -22,6 +22,7 @@ import com.example.moeyslider.utills.toPx
 import com.google.common.primitives.Floats.max
 import java.lang.RuntimeException
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.math.tanh
 
 @Composable
@@ -31,8 +32,7 @@ fun StoryFramework(
     initialSize: Size,
     storySet: List<Story>,
     close: () -> Unit,
-    finishedStorySetAction: () -> Unit,
-    dismissStories: () -> Unit = {}
+    finishedStorySetAction: () -> Unit
 ) {
     var justLaunched by remember { mutableStateOf(true) }
     var closeEvent by remember { mutableStateOf(false) }
@@ -58,12 +58,6 @@ fun StoryFramework(
             justLaunched = false
         }
 
-        LaunchedEffect(gestureEndEvent) {
-            if (gestureEndEvent) {
-                closeEvent = true
-            }
-        }
-
         var currentStoryIndex by remember { mutableStateOf(0) }
         var currentVideoProgress by remember { mutableStateOf(0.0f) }
 
@@ -71,10 +65,21 @@ fun StoryFramework(
 
         var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
         var tapEvent: Offset? by remember { mutableStateOf(null) }
-        val tapType = getTapType(
-            tapPosition = tapEvent,
-            width = sizePx.width
-        )
+        val tapType = remember(tapEvent) {
+            getTapType(
+                tapPosition = tapEvent,
+                width = sizePx.width
+            )
+        }
+
+        LaunchedEffect(gestureEndEvent) {
+            val x = totalVerticalDragAmount.absoluteValue
+            Log.d("YOYO", "$x")
+            if (gestureEndEvent && totalVerticalDragAmount > sizePx.height * 0.1) {
+                closeEvent = true
+            }
+            gestureEndEvent = false
+        }
 
         LaunchedEffect(key1 = tapType) {
             when (tapType) {
@@ -102,17 +107,17 @@ fun StoryFramework(
             }
         }
 
-        Box(Modifier.size(sizeDp)) {
 
-            val proportion = remember(sizeDp) { sizeDp.height / sizeDp.width }
+        val proportion = remember(sizeDp) { sizeDp.height / sizeDp.width }
 
-            val totalDragAmountDp = remember(totalVerticalDragAmount) {
-                val x = totalVerticalDragAmount//.toDp().value.toFloat()
-                (tanh(x / (size.height - size.height / Math.E)) * (size.height - size.height / 1.612f)).dp
-            }
+        val totalDragAmountDp = remember(totalVerticalDragAmount) {
+            val x = totalVerticalDragAmount//.toDp().value.toFloat()
+            (tanh(x / (size.height - size.height / Math.E)) * (size.height - size.height / 1.612f)).dp
+        }
 
-            val newModifier = remember {
-                Modifier.addMultipleGestures(
+        val gesturesModifier = remember() {
+            Modifier
+                .addMultipleGestures(
                     onGestureStart = {
                         playerState = VideoPlayerState.Paused
                         totalVerticalDragAmount = 0f
@@ -125,45 +130,49 @@ fun StoryFramework(
                     onVerticalDrag = { totalVerticalDragAmount = max(0f, it) },
                     onVerticalDragEnd = {
                         totalVerticalDragAmount = 0f
-                        dismissStories()
+                        gestureEndEvent = true
                     }
                 )
-            }
-            Box(
-                newModifier
-                    .padding(
-                        top = totalDragAmountDp,
-                        start = totalDragAmountDp / proportion / 20,
-                        end = totalDragAmountDp / proportion / 20
-                    )
+        }
 
-            ) {
-                ComposedStoryProgressBar(
-                    modifier = Modifier
-                        .zIndex(2f)
-                        .padding(2.dp),
-                    numberOfStories = storySet.size,
-                    currentVideoIndex = currentStoryIndex,
-                    progressOfCurrentVideo = currentVideoProgress
+        val newModifier = remember(gesturesModifier, sizeDp) {
+            gesturesModifier.size(sizeDp)
+        }
+
+        Box(
+            newModifier
+                .padding(
+                    top = totalDragAmountDp,
+                    start = totalDragAmountDp / proportion / 20,
+                    end = totalDragAmountDp / proportion / 20
                 )
 
-                VideoPlayer(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(1f),
-                    state = playerState,
-                    currentVideoIndex = currentStoryIndex,
-                    onStateChange = { newState -> playerState = newState },
-                    onVideoIndexChange = {
-                        currentStoryIndex = it
-                        currentVideoProgress = 0f
-                    },
-                    onVideoProgressChange = {
-                        currentVideoProgress = it
-                    },
-                    videoLinks = storySet.map { it.video.link },
-                )
-            }
+        ) {
+            ComposedStoryProgressBar(
+                modifier = Modifier
+                    .zIndex(2f)
+                    .padding(2.dp),
+                numberOfStories = storySet.size,
+                currentVideoIndex = currentStoryIndex,
+                progressOfCurrentVideo = currentVideoProgress
+            )
+
+            VideoPlayer(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f),
+                state = playerState,
+                currentVideoIndex = currentStoryIndex,
+                onStateChange = { newState -> playerState = newState },
+                onVideoIndexChange = {
+                    currentStoryIndex = it
+                    currentVideoProgress = 0f
+                },
+                onVideoProgressChange = {
+                    currentVideoProgress = it
+                },
+                videoLinks = storySet.map { it.video.link },
+            )
         }
     }
 }
@@ -243,7 +252,7 @@ private fun getTapType(
         in 0f..quarterOfWidth -> TapType.ShortLeft
         in quarterOfWidth..(width - quarterOfWidth) -> TapType.ShortCenter
         in (width - quarterOfWidth)..width -> TapType.ShortRight
-        else -> throw RuntimeException("Something went wrong detecting tap type, this state should be impossible")
+        else -> TapType.None
     }
 }
 

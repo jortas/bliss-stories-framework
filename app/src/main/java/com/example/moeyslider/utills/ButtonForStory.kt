@@ -22,9 +22,12 @@ fun ButtonForStory(
     shape: Shape,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
-    ) {
+) {
     Button(
-        modifier = modifier.background(Color.Blue, shape),
+        modifier = modifier
+            .padding(0.dp)
+            .background(Color.Transparent, shape)
+            .fillMaxSize(),
         onClick = onClick
     ) {
     }
@@ -33,7 +36,7 @@ fun ButtonForStory(
 
 @Preview
 @Composable
-fun ButtonForStoryPreview(){
+fun ButtonForStoryPreview() {
     MaterialTheme {
         ButtonForStory(
             shape = RectangleShape

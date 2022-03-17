@@ -2,6 +2,7 @@ package com.example.moeyslider
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
@@ -12,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -42,13 +44,13 @@ class MainActivity : AppCompatActivity() {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         val shape = RoundedCornerShape(4.dp)
                         ButtonForStory(
-                            shape = RectangleShape,
+                            shape = shape,
                             modifier = Modifier.size(widthButton, heightButton),
                             onClick = { open = true }
                         )
                         if (open) {
                             StoryFramework(
-                                initialShape = RectangleShape,
+                                initialShape = shape,
                                 initialSize = Size(widthButton.value, heightButton.value),
                                 modifier = Modifier.fillMaxSize(),
                                 storySet = storyFactoryMock(),
