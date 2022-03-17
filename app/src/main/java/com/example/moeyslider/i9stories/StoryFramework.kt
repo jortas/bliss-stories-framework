@@ -12,9 +12,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.moeyslider.models.Story
+import com.example.moeyslider.utills.toDpSize
+import com.example.moeyslider.utills.toPx
 import com.google.common.primitives.Floats.max
 import java.lang.RuntimeException
 import kotlin.math.abs
@@ -34,32 +38,31 @@ fun StoryFramework(
     var closeEvent by remember { mutableStateOf(false) }
     var gestureEndEvent by remember { mutableStateOf(false) }
 
-
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        val localDensity = LocalDensity.current
-        var size = with(localDensity) {
-            animateSizeAsState(
-                targetValue = if (justLaunched || closeEvent) initialSize else Size(
-                    maxWidth.toPx(),
-                    maxHeight.toPx()
-                ), finishedListener = { size ->
-                    if (closeEvent) {
-                        close()
-                    }
-                })
-        }
+        val size by animateSizeAsState(
+            targetValue = if (justLaunched || closeEvent) initialSize else {
+                Size(
+                    maxWidth.value,
+                    maxHeight.value
+                )
+            }, finishedListener = { size ->
+                if (closeEvent) {
+                    close()
+                }
+            })
+        val sizeDp = size.toDpSize()
+        val sizePx = sizeDp.toPx(LocalDensity.current)
+
 
         LaunchedEffect("init") {
             justLaunched = false
         }
 
-
         LaunchedEffect(gestureEndEvent) {
-            if (gestureEndEvent )= true){
-
+            if (gestureEndEvent) {
+                closeEvent = true
             }
         }
-
 
         var currentStoryIndex by remember { mutableStateOf(0) }
         var currentVideoProgress by remember { mutableStateOf(0.0f) }
@@ -68,12 +71,47 @@ fun StoryFramework(
 
         var playerState by remember { mutableStateOf(VideoPlayerState.Playing) }
         var tapEvent: Offset? by remember { mutableStateOf(null) }
+        val tapType = getTapType(
+            tapPosition = tapEvent,
+            width = sizePx.width
+        )
 
-        BoxWithConstraints(Modifier.size(size.value.width.dp, size.value.height.dp)) {
-            val constraintScope = this
-            val localDensity = LocalDensity.current
+        LaunchedEffect(key1 = tapType) {
+            when (tapType) {
+                TapType.ShortLeft -> {
+                    if (currentStoryIndex == 0) {
+                        closeEvent = true
+                    } else {
+                        currentVideoProgress = 0f
+                        currentStoryIndex -= 1
+                    }
+                }
+                TapType.ShortCenter,
+                TapType.ShortRight -> {
+                    if (currentStoryIndex == storySet.lastIndex) {
+                        closeEvent = true
+                    } else {
+                        currentVideoProgress = 0f
+                        currentStoryIndex += 1
+                    }
+                }
+                TapType.None,
+                TapType.Long -> {
+                    //Nothing
+                }
+            }
+        }
 
-            val newModifier = remember() {
+        Box(Modifier.size(sizeDp)) {
+
+            val proportion = remember(sizeDp) { sizeDp.height / sizeDp.width }
+
+            val totalDragAmountDp = remember(totalVerticalDragAmount) {
+                val x = totalVerticalDragAmount//.toDp().value.toFloat()
+                (tanh(x / (size.height - size.height / Math.E)) * (size.height - size.height / 1.612f)).dp
+            }
+
+            val newModifier = remember {
                 Modifier.addMultipleGestures(
                     onGestureStart = {
                         playerState = VideoPlayerState.Paused
@@ -91,45 +129,6 @@ fun StoryFramework(
                     }
                 )
             }
-
-            currentStoryIndex = remember(tapEvent) {
-                Log.d("JORT", "${tapEvent.hashCode()}")
-                val tapType = tapEvent?.let {
-                    with(localDensity) {
-                        getTapType(
-                            tapPosition = it,
-                            width = constraintScope.maxWidth.toPx() //todo to px
-                        )
-                    }
-                }
-                when (tapType) {
-                    TapType.ShortLeft -> {
-                        if (currentStoryIndex == 0) {
-                            closeEvent = true
-                        } else {
-                            currentVideoProgress = 0f
-                            return@remember currentStoryIndex - 1
-                        }
-                    }
-                    TapType.ShortCenter,
-                    TapType.ShortRight -> {
-                        if (currentStoryIndex == storySet.lastIndex) {
-                            closeEvent = true
-                        } else {
-                            currentVideoProgress = 0f
-                            return@remember currentStoryIndex + 1
-                        }
-                    }
-                }
-                return@remember currentStoryIndex
-            }
-            val proportion = remember(maxHeight, maxWidth) { maxHeight / maxWidth }
-
-            val totalDragAmountDp = remember(totalVerticalDragAmount) {
-                val x = totalVerticalDragAmount//.toDp().value.toFloat()
-                (tanh(x / (maxHeight.value - maxHeight.value / Math.E)) * (maxHeight.value - maxHeight.value / 1.612f)).dp
-            }
-
             Box(
                 newModifier
                     .padding(
@@ -137,7 +136,6 @@ fun StoryFramework(
                         start = totalDragAmountDp / proportion / 20,
                         end = totalDragAmountDp / proportion / 20
                     )
-                    .defaultMinSize(maxWidth, maxHeight)
 
             ) {
                 ComposedStoryProgressBar(
@@ -199,6 +197,7 @@ private fun Modifier.addMultipleGestures(
                     } while (abs(drag.x) < PRESS_SAFE_ZONE && abs(drag.y) < PRESS_SAFE_ZONE && pointer != null)
 
                     val pressedTime = System.currentTimeMillis() - pressStartTime
+
                     if (pointer == null && pressedTime < MAX_TIME_TAP_MS) {
                         onPress(firstTouchPointer.position)
                     } else if (pointer == null && pressedTime > MAX_TIME_TAP_MS) {
@@ -233,9 +232,12 @@ private fun Modifier.addMultipleGestures(
 }
 
 private fun getTapType(
-    tapPosition: Offset,
+    tapPosition: Offset?,
     width: Float
 ): TapType {
+    if (tapPosition == null) {
+        return TapType.None
+    }
     val quarterOfWidth = width / 4f
     return when (tapPosition.x) {
         in 0f..quarterOfWidth -> TapType.ShortLeft
@@ -245,14 +247,13 @@ private fun getTapType(
     }
 }
 
-
 private const val PRESS_SAFE_ZONE = 30f
 private const val MAX_TIME_TAP_MS = 200
 
 enum class TapType {
+    None,
     ShortLeft,
     ShortCenter,
     ShortRight,
-
     Long
 }
