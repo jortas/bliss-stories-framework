@@ -1,12 +1,14 @@
-package com.example.blissstories.i9stories
+package com.example.moeyslider.i9stories
 
 import android.util.Log
 import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Shape
@@ -14,9 +16,9 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.blissstories.models.Story
-import com.example.blissstories.utills.toDpSize
-import com.example.blissstories.utills.toPx
+import com.example.moeyslider.models.Story
+import com.example.moeyslider.utills.toDpSize
+import com.example.moeyslider.utills.toPx
 import com.google.common.primitives.Floats.max
 import kotlin.math.abs
 import kotlin.math.absoluteValue
@@ -47,9 +49,19 @@ fun StoryFramework(
                     close()
                 }
             })
-        val sizeDp = size.toDpSize()
-        val sizePx = sizeDp.toPx(LocalDensity.current)
+        val sizeDp = remember(size) {
+            size.toDpSize()
+        }
+        val density = LocalDensity.current
+        val sizePx = remember(sizeDp) {
+            sizeDp.toPx(density)
+        }
 
+        val maxHeightPx = remember(maxHeight) {
+            with(density) {
+                maxHeight.toPx()
+            }
+        }
 
         LaunchedEffect("init") {
             justLaunched = false
@@ -72,7 +84,7 @@ fun StoryFramework(
         LaunchedEffect(gestureEndEvent) {
             val x = totalVerticalDragAmount.absoluteValue
             Log.d("YOYO", "$x")
-            if (gestureEndEvent && totalVerticalDragAmount > sizePx.height * 0.1) {
+            if (gestureEndEvent && totalVerticalDragAmount > maxHeightPx * PERCENTAGE_TO_DISMISS) {
                 closeEvent = true
             }
             gestureEndEvent = false
@@ -107,9 +119,15 @@ fun StoryFramework(
 
         val proportion = remember(sizeDp) { sizeDp.height / sizeDp.width }
 
-        val totalDragAmountDp = remember(totalVerticalDragAmount) {
-            val x = totalVerticalDragAmount//.toDp().value.toFloat()
-            (tanh(x / (size.height - size.height / Math.E)) * (size.height - size.height / 1.612f)).dp
+        val topOffset = remember(totalVerticalDragAmount) {
+            val x = totalVerticalDragAmount
+            with(density){
+                (tanh(x / (maxHeightPx - maxHeightPx / GOLD_RATIO)) * (maxHeightPx - maxHeightPx / GOLD_RATIO)).toDp()
+            }
+        }
+
+        val paddingAmount = remember(topOffset) {
+            topOffset / PADDING_PROPORTION
         }
 
         val gesturesModifier = remember() {
@@ -138,11 +156,14 @@ fun StoryFramework(
 
         Box(
             newModifier
+                .offset(0.dp, y = topOffset)
                 .padding(
-                    top = totalDragAmountDp,
-                    start = totalDragAmountDp / proportion / 20,
-                    end = totalDragAmountDp / proportion / 20
+                    start = paddingAmount / proportion / 2,
+                    end = paddingAmount / proportion / 2,
+                    bottom = paddingAmount
                 )
+                .clip(RoundedCornerShape(topOffset / CORNER_RADIUS_PROPORTION))
+
 
         ) {
             ComposedStoryProgressBar(
@@ -203,7 +224,6 @@ private fun Modifier.addMultipleGestures(
                     } while (abs(drag.x) < PRESS_SAFE_ZONE && abs(drag.y) < PRESS_SAFE_ZONE && pointer != null)
 
                     val pressedTime = System.currentTimeMillis() - pressStartTime
-
                     if (pointer == null && pressedTime < MAX_TIME_TAP_MS) {
                         onPress(firstTouchPointer.position)
                     } else if (pointer == null && pressedTime > MAX_TIME_TAP_MS) {
@@ -255,6 +275,10 @@ private fun getTapType(
 
 private const val PRESS_SAFE_ZONE = 30f
 private const val MAX_TIME_TAP_MS = 200
+private const val PERCENTAGE_TO_DISMISS = 0.25f
+private const val GOLD_RATIO = 1.612f
+private const val PADDING_PROPORTION = GOLD_RATIO * 4
+private const val CORNER_RADIUS_PROPORTION = GOLD_RATIO * 8
 
 enum class TapType {
     None,
