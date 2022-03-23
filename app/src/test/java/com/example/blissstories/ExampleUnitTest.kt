@@ -1,4 +1,4 @@
-package com.example.moeyslider
+package com.example.blissstories
 
 import org.junit.Test
 

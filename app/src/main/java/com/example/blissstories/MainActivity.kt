@@ -1,8 +1,7 @@
-package com.example.moeyslider
+package com.example.blissstories
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
@@ -13,14 +12,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
-import com.example.moeyslider.i9stories.StoryFramework
-import com.example.moeyslider.models.storyFactoryMock
-import com.example.moeyslider.utills.ButtonForStory
+import com.example.blissstories.i9stories.StoryFramework
+import com.example.blissstories.models.storyFactoryMock
+import com.example.blissstories.utills.ButtonForStory
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

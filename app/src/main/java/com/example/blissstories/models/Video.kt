@@ -1,4 +1,4 @@
-package com.example.moeyslider.models
+package com.example.blissstories.models
 
 import android.net.Uri
 

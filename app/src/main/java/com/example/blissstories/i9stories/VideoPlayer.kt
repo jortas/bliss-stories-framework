@@ -1,4 +1,4 @@
-package com.example.moeyslider.i9stories
+package com.example.blissstories.i9stories
 
 import android.content.Context
 import android.net.Uri

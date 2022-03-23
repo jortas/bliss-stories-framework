@@ -1,4 +1,4 @@
-package com.example.moeyslider.i9stories
+package com.example.blissstories.i9stories
 
 import android.util.Log
 import androidx.compose.animation.core.animateSizeAsState
@@ -12,15 +12,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.moeyslider.models.Story
-import com.example.moeyslider.utills.toDpSize
-import com.example.moeyslider.utills.toPx
+import com.example.blissstories.models.Story
+import com.example.blissstories.utills.toDpSize
+import com.example.blissstories.utills.toPx
 import com.google.common.primitives.Floats.max
-import java.lang.RuntimeException
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.tanh

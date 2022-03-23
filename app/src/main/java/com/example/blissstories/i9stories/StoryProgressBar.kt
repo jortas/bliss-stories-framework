@@ -1,4 +1,4 @@
-package com.example.moeyslider.i9stories
+package com.example.blissstories.i9stories
 
 import androidx.annotation.FloatRange
 import androidx.compose.animation.core.LinearEasing
