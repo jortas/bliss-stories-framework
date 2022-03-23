@@ -5,5 +5,5 @@ dependencyResolutionManagement {
         jcenter() // Warning: this repository is going to shut down soon
     }
 }
-rootProject.name = "BlissSliders"
+rootProject.name = "BlissStories"
 include ':app'
