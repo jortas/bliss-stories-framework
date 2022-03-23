@@ -5,9 +5,14 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
@@ -18,7 +23,6 @@ import kotlinx.coroutines.delay
 fun VideoPlayer(
     modifier: Modifier = Modifier,
     videoLinks: List<Uri>,
-    thumbnail: Uri? = null,
     state: VideoPlayerState = VideoPlayerState.Playing,
     currentVideoIndex: Int,
     onStateChange: (VideoPlayerState) -> Unit = {},
@@ -39,9 +43,8 @@ fun VideoPlayer(
         }
     }
 
-    remember(key1 = state) {
+    LaunchedEffect(key1 = state) {
         exoPlayer.playWhenReady = state == VideoPlayerState.Playing
-        1
     }
     LaunchedEffect(key1 = "init", block = {
         while (true) {
@@ -53,8 +56,7 @@ fun VideoPlayer(
     // player view
     DisposableEffect(
         AndroidView(
-            modifier = modifier
-                .fillMaxSize(),
+            modifier = modifier,
             factory = {
                 PlayerView(context).apply {
                     setKeepContentOnPlayerReset(true)
