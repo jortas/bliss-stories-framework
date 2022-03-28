@@ -16,9 +16,12 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.example.moeyslider.models.Story
-import com.example.moeyslider.utills.toDpSize
-import com.example.moeyslider.utills.toPx
+import com.example.blissstories.i9stories.ComposedStoryProgressBar
+import com.example.blissstories.i9stories.VideoPlayer
+import com.example.blissstories.i9stories.VideoPlayerState
+import com.example.blissstories.models.Story
+import com.example.blissstories.utills.toDpSize
+import com.example.blissstories.utills.toPx
 import com.google.common.primitives.Floats.max
 import kotlin.math.abs
 import kotlin.math.absoluteValue

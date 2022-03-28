@@ -15,9 +15,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
-import com.example.blissstories.i9stories.StoryFramework
 import com.example.blissstories.models.storyFactoryMock
 import com.example.blissstories.utills.ButtonForStory
+import com.example.moeyslider.i9stories.StoryFramework
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
