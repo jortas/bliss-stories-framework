@@ -1,38 +1,68 @@
 package com.example.blissstories.models
 
 import android.net.Uri
-
+import androidx.compose.ui.graphics.Color
 
 //All length are in MS
-data class Video(
+data class VideoFile(
     val link: Uri,
-    val thumbnail: Uri,
-    val length: Int
 ) {
-
     companion object {
         const val MIN_LENGTH = 5000
         const val MAX_LENGTH = 10000
     }
 }
 
-data class Story(val video: Video)
+sealed class Story() {
+    abstract val order: Int
 
-fun storyFactoryMock(numberOfStories: Int = 5): MutableList<Story> {
-    val storyList = mutableListOf<Story>()
-    for (i in 0 until numberOfStories) {
-        val story = Story(
-            Video(
-                link = Uri.parse(VIDEO1),
-                thumbnail = Uri.parse(THUMB1),
-                length = (Video.MIN_LENGTH + Math.random() * (Video.MAX_LENGTH - Video.MIN_LENGTH)).toInt()
-            )
-        )
-        storyList.add(story)
+    data class Video(val video: Uri, override val order: Int) : Story()
+    data class Static(
+        val color: Color,
+        val duration: Duration,
+        override val order: Int
+    ) : Story()
+
+
+    enum class Duration(val timeInMs: Int) {
+        Short(6000), Long(12000)
     }
+}
+
+
+fun storyFactoryMock(): MutableList<Story> {
+    val storyList = mutableListOf<Story>()
+    val story0 = Story.Video(
+        Uri.parse(VIDEO1),
+        order = 0
+    )
+    val story1 = Story.Static(
+        color = Color.Blue,
+        duration = Story.Duration.Short,
+        order = 1
+    )
+    val story2 = Story.Static(
+        color = Color.Yellow,
+        duration = Story.Duration.Short,
+        order = 2
+    )
+    val story3 = Story.Video(
+        Uri.parse(VIDEO1),
+        order = 3
+    )
+    val story4 = Story.Static(
+        color = Color.Gray,
+        duration = Story.Duration.Short,
+        order = 2
+    )
+    storyList.add(story0)
+    storyList.add(story1)
+    storyList.add(story2)
+    storyList.add(story3)
+    storyList.add(story4)
     return storyList
 }
 
 
-const val VIDEO1 = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-const val THUMB1 = "https://doc-0o-1c-docs.googleusercontent.com/docs/securesc/7susn09vl6bta257ns173c560hdgo4nh/l9o141ks1pr7d8ldolju6hel7gnpeqnb/1643290425000/02353941631099677339/02353941631099677339/17RW9jETdZGKiba-HbtUqOzj-2KF-A7JY?e=download&authuser=0&nonce=jgju7kf3vs194&user=02353941631099677339&hash=2m0qf048kd08vjp58h4fovsi0bolmce3"
+const val VIDEO1 =
+    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"

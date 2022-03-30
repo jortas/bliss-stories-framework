@@ -5,19 +5,16 @@ import android.os.Bundle
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
+import com.example.blissstories.i9stories.StoriesPlayer
 import com.example.blissstories.models.storyFactoryMock
 import com.example.blissstories.utills.ButtonForStory
-import com.example.moeyslider.i9stories.StoryFramework
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,22 +35,39 @@ class MainActivity : AppCompatActivity() {
                     var open by remember {
                         mutableStateOf(false)
                     }
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    BoxWithConstraints(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         val shape = RoundedCornerShape(4.dp)
+                        var left by remember {
+                            mutableStateOf(0.dp)
+                        }
+                        var totalHorizontalDragAmount by remember { mutableStateOf(0.dp) }
+
                         ButtonForStory(
                             shape = shape,
                             modifier = Modifier.size(widthButton, heightButton),
                             onClick = { open = true }
                         )
-                        if (open) {
-                            StoryFramework(
-                                initialShape = shape,
-                                initialSize = Size(widthButton.value, heightButton.value),
-                                modifier = Modifier.fillMaxSize(),
-                                storySet = storyFactoryMock(),
-                                close = {open = false},
-                                finishedStorySetAction = {}
-                            )
+                        if (open || true) {
+                            Box(
+                                Modifier
+                                    .size(200.dp)
+                                    .offset(x = 0.dp)
+                            ) {
+                                StoriesPlayer(
+                                    initialShape = shape,
+                                    initialSize = Size(widthButton.value, heightButton.value),
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    storySet = storyFactoryMock(),
+                                    close = { open = false },
+                                    onFinishedStorySet = {},
+                                    onHorizontalDrag = { left = it },
+                                    onHorizontalDragEnd = { totalHorizontalDragAmount += left }
+                                )
+                            }
                         }
                     }
                 }
