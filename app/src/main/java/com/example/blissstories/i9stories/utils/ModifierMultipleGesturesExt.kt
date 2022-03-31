@@ -1,9 +1,6 @@
 package com.example.blissstories.i9stories
 
-import androidx.compose.foundation.gestures.awaitDragOrCancellation
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitVerticalDragOrCancellation
-import androidx.compose.foundation.gestures.forEachGesture
+import androidx.compose.foundation.gestures.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -64,7 +61,7 @@ internal fun Modifier.addMultipleGestures(
                     totalDragWithDirection = drag.x.toDp()
                     onHorizontalDrag(totalDragWithDirection)
                     do {
-                        pointer = awaitVerticalDragOrCancellation(firstTouchPointer.id)
+                        pointer = awaitHorizontalDragOrCancellation(firstTouchPointer.id)
                         pointer?.let {
                             with(density) {
                                 totalDragWithDirection += it.positionChange().x.toDp()
@@ -78,6 +75,32 @@ internal fun Modifier.addMultipleGestures(
             }
         }
     }
+}
+
+
+internal fun getTapType(
+    tapPosition: Offset?,
+    width: Float
+): TapType {
+    if (tapPosition == null) {
+        return TapType.None
+    }
+    val quarterOfWidth = width / 4f
+    return when (tapPosition.x) {
+        in 0f..quarterOfWidth -> TapType.ShortLeft
+        in quarterOfWidth..(width - quarterOfWidth) -> TapType.ShortCenter
+        in (width - quarterOfWidth)..width -> TapType.ShortRight
+        else -> TapType.None
+    }
+}
+
+
+enum class TapType {
+    None,
+    ShortLeft,
+    ShortCenter,
+    ShortRight,
+    Long
 }
 
 private const val PRESS_SAFE_ZONE = 30f

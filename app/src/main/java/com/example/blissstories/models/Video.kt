@@ -3,15 +3,7 @@ package com.example.blissstories.models
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
 
-//All length are in MS
-data class VideoFile(
-    val link: Uri,
-) {
-    companion object {
-        const val MIN_LENGTH = 5000
-        const val MAX_LENGTH = 10000
-    }
-}
+typealias StorySet = List<Story>
 
 sealed class Story() {
     abstract val order: Int
@@ -63,6 +55,30 @@ fun storyFactoryMock(): MutableList<Story> {
     return storyList
 }
 
+
+
+fun staticStoryFactoryMock(): MutableList<Story> {
+    val storyList = mutableListOf<Story>()
+    val story1 = Story.Static(
+        color = Color.Blue,
+        duration = Story.Duration.Short,
+        order = 1
+    )
+    val story2 = Story.Static(
+        color = Color.Yellow,
+        duration = Story.Duration.Short,
+        order = 2
+    )
+    val story4 = Story.Static(
+        color = Color.Gray,
+        duration = Story.Duration.Short,
+        order = 2
+    )
+    storyList.add(story1)
+    storyList.add(story2)
+    storyList.add(story4)
+    return storyList
+}
 
 const val VIDEO1 =
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"

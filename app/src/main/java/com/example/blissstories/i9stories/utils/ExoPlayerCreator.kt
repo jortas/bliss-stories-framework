@@ -1,6 +1,7 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.utils
 
 import android.content.Context
+import com.example.blissstories.i9stories.StoryFrameState
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player

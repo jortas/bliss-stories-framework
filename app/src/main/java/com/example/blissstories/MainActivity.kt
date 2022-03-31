@@ -12,7 +12,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
-import com.example.blissstories.i9stories.StoriesPlayer
+import com.example.blissstories.i9stories.StoriesSetPlayer
+import com.example.blissstories.models.staticStoryFactoryMock
 import com.example.blissstories.models.storyFactoryMock
 import com.example.blissstories.utills.ButtonForStory
 
@@ -40,10 +41,6 @@ class MainActivity : AppCompatActivity() {
                         contentAlignment = Alignment.Center
                     ) {
                         val shape = RoundedCornerShape(4.dp)
-                        var left by remember {
-                            mutableStateOf(0.dp)
-                        }
-                        var totalHorizontalDragAmount by remember { mutableStateOf(0.dp) }
 
                         ButtonForStory(
                             shape = shape,
@@ -51,23 +48,13 @@ class MainActivity : AppCompatActivity() {
                             onClick = { open = true }
                         )
                         if (open || true) {
-                            Box(
-                                Modifier
-                                    .size(200.dp)
-                                    .offset(x = 0.dp)
-                            ) {
-                                StoriesPlayer(
-                                    initialShape = shape,
-                                    initialSize = Size(widthButton.value, heightButton.value),
-                                    modifier = Modifier
-                                        .fillMaxSize(),
-                                    storySet = storyFactoryMock(),
-                                    close = { open = false },
-                                    onFinishedStorySet = {},
-                                    onHorizontalDrag = { left = it },
-                                    onHorizontalDragEnd = { totalHorizontalDragAmount += left }
-                                )
-                            }
+                            StoriesSetPlayer(
+                                initialShape = shape,
+                                initialSize = Size(widthButton.value, heightButton.value),
+                                storySetsList = listOf(storyFactoryMock(), staticStoryFactoryMock()),
+                                close = { open = false },
+                                onFinishedStorySets = {}
+                            )
                         }
                     }
                 }

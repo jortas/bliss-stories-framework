@@ -18,7 +18,6 @@ fun StaticStoryPlayer(
     onStoryProgressChange: (Float) -> Unit = {},
     onStoryFinished: () -> Unit = {}
 ) {
-    val context = LocalContext.current
     var progress by remember(story) {
         mutableStateOf(0f)
     }

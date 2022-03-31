@@ -1,7 +1,5 @@
 package com.example.blissstories.i9stories
 
-import androidx.compose.animation.core.animateSizeAsState
-import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -10,26 +8,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.zIndex
+import com.example.blissstories.i9stories.utils.ExoPlayerCreator
 import com.example.blissstories.models.Story
+import com.example.blissstories.models.StorySet
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
 import com.google.android.exoplayer2.MediaItem
-import kotlin.math.abs
 import kotlin.math.tanh
 
 @Composable
 fun StoriesPlayer(
     modifier: Modifier,
-    initialShape: Shape = RoundedCornerShape(4.dp),
-    initialSize: Size = Size(1f, 1f),
-    animateEntry: Boolean = true,
-    storySet: List<Story>,
+    size: Size,
+    storySet: StorySet?,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
     onHorizontalDragEnd: () -> Unit,
@@ -39,8 +34,9 @@ fun StoriesPlayer(
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    var justLaunched by remember { mutableStateOf(true) }
-    var closeEvent by remember { mutableStateOf(false) }
+    if (storySet == null) {
+        return
+    }
 
     val mediaItems = remember(storySet) {
         storySet.filterIsInstance(Story.Video::class.java).map { MediaItem.fromUri(it.video) }
@@ -48,8 +44,17 @@ fun StoriesPlayer(
 
     //This val corresponds to the index of the video the exoplayer should be in
     val mediaItemsIndex = remember(storySet) {
-        var totalVideos = 0
-        storySet.map { if (it is Story.Video && totalVideos < mediaItems.size - 1) totalVideos++ else totalVideos }
+        var nextIndex = 0
+        var currentIndex = 0
+        storySet.map {
+            currentIndex = nextIndex
+            if (it is Story.Video && currentIndex < mediaItems.size - 1) {
+                nextIndex++
+                currentIndex
+            } else {
+                currentIndex
+            }
+        }
     }
 
     var currentStoryIndex by remember { mutableStateOf(0) }
@@ -74,10 +79,6 @@ fun StoriesPlayer(
         exoPlayer
     }
 
-    LaunchedEffect("init") {
-        justLaunched = false
-    }
-
     LaunchedEffect(currentStoryIndex) {
         playerState = StoryFrameState.Playing
     }
@@ -91,7 +92,7 @@ fun StoriesPlayer(
         when (tapType) {
             TapType.ShortLeft -> {
                 if (currentStoryIndex == 0) {
-                    closeEvent = true
+                    close()
                 } else {
                     currentStoryProgress = 0f
                     currentStoryIndex -= 1
@@ -100,7 +101,7 @@ fun StoriesPlayer(
             TapType.ShortCenter,
             TapType.ShortRight -> {
                 if (currentStoryIndex == storySet.lastIndex) {
-                    closeEvent = true
+                    onFinishedStorySet()
                 } else {
                     currentStoryProgress = 0f
                     currentStoryIndex += 1
@@ -120,15 +121,6 @@ fun StoriesPlayer(
                 maxHeight.value
             )
         }
-
-        val size by animateSizeAsState(
-            targetValue = if (justLaunched && animateEntry || closeEvent) initialSize else {
-                maxSize
-            }, finishedListener = { size ->
-                if (closeEvent) {
-                    close()
-                }
-            })
 
         val sizeDp = remember(size) {
             size.toDpSize()
@@ -168,7 +160,7 @@ fun StoriesPlayer(
                     onVerticalDrag = { totalVerticalDragAmount = max(0.dp, it) },
                     onVerticalDragEnd = {
                         if (totalVerticalDragAmount > maxHeight * PERCENTAGE_TO_DISMISS) {
-                            closeEvent = true
+                            close()
                         }
                         totalVerticalDragAmount = 0.dp
                     },
@@ -229,35 +221,11 @@ fun StoriesPlayer(
     }
 }
 
-private fun getTapType(
-    tapPosition: Offset?,
-    width: Float
-): TapType {
-    if (tapPosition == null) {
-        return TapType.None
-    }
-    val quarterOfWidth = width / 4f
-    return when (tapPosition.x) {
-        in 0f..quarterOfWidth -> TapType.ShortLeft
-        in quarterOfWidth..(width - quarterOfWidth) -> TapType.ShortCenter
-        in (width - quarterOfWidth)..width -> TapType.ShortRight
-        else -> TapType.None
-    }
+enum class StoryFrameState() {
+    Playing, Paused, Unknown
 }
 
 private const val PERCENTAGE_TO_DISMISS = 0.25f
 private const val GOLD_RATIO = 1.612f
 private const val PADDING_PROPORTION = GOLD_RATIO * 4
 private const val CORNER_RADIUS_PROPORTION = GOLD_RATIO * 8
-
-enum class StoryFrameState() {
-    Playing, Paused, Unknown
-}
-
-enum class TapType {
-    None,
-    ShortLeft,
-    ShortCenter,
-    ShortRight,
-    Long
-}
