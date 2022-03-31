@@ -82,9 +82,7 @@ fun StoriesSetPlayer(
                 storySet = storySetsList[0],
                 close = { closeEvent = true },
                 onFinishedStorySet = {},
-                onHorizontalDrag = {
-                    Log.d("TIU","${savedHorizontalDragAmount + it}")
-                    horizontalDragAmount = savedHorizontalDragAmount + it },
+                onHorizontalDrag = { horizontalDragAmount = savedHorizontalDragAmount + it },
                 onHorizontalDragEnd = { savedHorizontalDragAmount = horizontalDragAmount }
             )
             StoriesPlayer(
