@@ -23,7 +23,6 @@ import kotlin.math.tanh
 @Composable
 fun StoriesPlayer(
     modifier: Modifier,
-    size: Size,
     storySet: StorySet?,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
@@ -115,13 +114,12 @@ fun StoriesPlayer(
     }
 
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-        val maxSize = remember(maxWidth, maxHeight) {
+        val size = remember(maxWidth, maxHeight) {
             Size(
                 maxWidth.value,
                 maxHeight.value
             )
         }
-
         val sizeDp = remember(size) {
             size.toDpSize()
         }

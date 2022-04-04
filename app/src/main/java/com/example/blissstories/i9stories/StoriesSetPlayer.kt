@@ -11,12 +11,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.*
 import com.example.blissstories.models.StorySet
+import com.example.blissstories.utills.animateDpSIzeAsState
 
 @Composable
 fun StoriesSetPlayer(
     modifier: Modifier = Modifier,
     initialShape: Shape = RoundedCornerShape(4.dp),
-    initialSize: Size = Size(1f, 1f),
+    initialSize: DpSize = DpSize(1.dp, 1.dp),
     animateEntry: Boolean = true,
     storySetsList: List<StorySet>,
     close: () -> Unit,
@@ -27,6 +28,7 @@ fun StoriesSetPlayer(
         mutableStateOf(0.dp)
     }
     var savedHorizontalDragAmount by remember { mutableStateOf(0.dp) }
+    var focusedIndex by remember { mutableStateOf(0) }
 
     var justLaunched by remember { mutableStateOf(true) }
     var closeEvent by remember { mutableStateOf(false) }
@@ -41,19 +43,16 @@ fun StoriesSetPlayer(
             .offset(x = 0.dp),
         contentAlignment = Alignment.Center
     ) {
-        val maxSize = remember(maxWidth, maxHeight) {
-            Size(
-                maxWidth.value,
-                maxHeight.value
+        val maxSizeDp = remember(maxWidth, maxHeight) {
+            DpSize(
+                maxWidth,
+                maxHeight
             )
         }
-        val maxSizeDp = remember(maxSize) {
-            DpSize(maxSize.width.dp, maxSize.height.dp)
-        }
 
-        val size by animateSizeAsState(
+        val size by animateDpSIzeAsState(
             targetValue = if (justLaunched && animateEntry || closeEvent) initialSize else {
-                maxSize
+                maxSizeDp
             }, finishedListener = { size ->
                 if (closeEvent) {
                     close()
@@ -61,41 +60,52 @@ fun StoriesSetPlayer(
                 }
             })
 
-
-        Box() {
+        @Composable
+        fun StoriesPlayerForSet(index: Int, roundBobbinSize: Int) {
+            val storyIndex = remember(focusedIndex) {
+                indexOfStoriesRoundBobbin(focusedIndex, roundBobbinSize, index)
+            }
+            if (storyIndex < 0 || storyIndex > storySetsList.lastIndex) {
+                return
+            }
+            val offset = (maxSizeDp.width) * (storyIndex) + horizontalDragAmount
+            Log.d("HEY", "$index -> $storyIndex -> $focusedIndex -> $offset")
             StoriesPlayer(
-                size = size,
                 modifier = Modifier
-                    .size(maxSizeDp)
-                    .offset(x = -maxSizeDp.width + horizontalDragAmount),
-                storySet = null,
+                    .fillMaxSize()
+                    .offset(x = offset),
+                storySet = storySetsList[storyIndex],
                 close = { closeEvent = true },
-                onFinishedStorySet = {},
+                onFinishedStorySet = { focusedIndex += 1 },
                 onHorizontalDrag = { horizontalDragAmount = savedHorizontalDragAmount + it },
-                onHorizontalDragEnd = { savedHorizontalDragAmount = horizontalDragAmount }
-            )
-            StoriesPlayer(
-                size = size,
-                modifier = Modifier
-                    .size(maxSizeDp)
-                    .offset(x = horizontalDragAmount),
-                storySet = storySetsList[0],
-                close = { closeEvent = true },
-                onFinishedStorySet = {},
-                onHorizontalDrag = { horizontalDragAmount = savedHorizontalDragAmount + it },
-                onHorizontalDragEnd = { savedHorizontalDragAmount = horizontalDragAmount }
-            )
-            StoriesPlayer(
-                size = size,
-                modifier = Modifier
-                    .size(maxSizeDp)
-                    .offset(x = maxSizeDp.width + horizontalDragAmount),
-                storySet = storySetsList[1],
-                close = { closeEvent = true },
-                onFinishedStorySet = {},
-                onHorizontalDrag = { horizontalDragAmount = savedHorizontalDragAmount + it },
-                onHorizontalDragEnd = { savedHorizontalDragAmount = horizontalDragAmount }
+                onHorizontalDragEnd = {
+                    savedHorizontalDragAmount = horizontalDragAmount
+                    focusedIndex += 1
+                }
             )
         }
+
+        Box(Modifier.size(size)) {
+            val roundBobbinSize = remember { 4 }
+            for (i in -(roundBobbinSize - 1) / 2..roundBobbinSize / 2) {
+                StoriesPlayerForSet(i, roundBobbinSize)
+            }
+        }
     }
+
+
+}
+
+
+//This is for roundBobbin story player, in theory it should have 3 and indexs should be,
+// -1 0 1
+//0 should be the first player that appears in the center
+//This function will also work with 4, 5 or more players, in these two formats
+//-1 0 1 2 or -2 -1 0 1 2
+fun indexOfStoriesRoundBobbin(
+    currentFocusedIndex: Int,
+    roundBobbinSize: Int,
+    playerIndex: Int
+): Int {
+    return (((currentFocusedIndex - playerIndex + roundBobbinSize / 2) / roundBobbinSize)) * roundBobbinSize + playerIndex
 }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.i9stories.StoriesSetPlayer
 import com.example.blissstories.models.staticStoryFactoryMock
@@ -50,8 +51,14 @@ class MainActivity : AppCompatActivity() {
                         if (open || true) {
                             StoriesSetPlayer(
                                 initialShape = shape,
-                                initialSize = Size(widthButton.value, heightButton.value),
-                                storySetsList = listOf(storyFactoryMock(), staticStoryFactoryMock()),
+                                initialSize = DpSize(widthButton, heightButton),
+                                storySetsList = listOf(
+                                    storyFactoryMock(),
+                                    staticStoryFactoryMock(),
+                                    staticStoryFactoryMock(),
+                                    staticStoryFactoryMock(),
+                                    staticStoryFactoryMock()
+                                ),
                                 close = { open = false },
                                 onFinishedStorySets = {}
                             )
