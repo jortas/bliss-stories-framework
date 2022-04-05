@@ -1,5 +1,6 @@
 package com.example.blissstories.i9stories
 
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +14,10 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.models.StorySet
 import com.example.blissstories.utills.animateDpSIzeAsState
+import org.threeten.bp.LocalDateTime
+import org.threeten.bp.temporal.ChronoUnit
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @Composable
 fun StoriesSetPlayer(
@@ -26,9 +30,26 @@ fun StoriesSetPlayer(
     onFinishedStorySets: () -> Unit = {},
 ) {
     val shape = RoundedCornerShape(4.dp)
-    var horizontalDragAmount by remember {
-        mutableStateOf(0.dp)
+    var horizontalDragAmount by remember { mutableStateOf(0.dp) }
+    var snapValue by remember { mutableStateOf(0.dp) }
+
+    LaunchedEffect(snapValue) {
+        if (snapValue==0.dp){
+            return@LaunchedEffect
+        }
+        var now = LocalDateTime.now()
+        val end = now.plus(500L, ChronoUnit.MILLIS)
+        val initialDrag = horizontalDragAmount.value
+        while (now.isBefore(end)) {
+            now = LocalDateTime.now()
+            val progress = now.until(end, ChronoUnit.MILLIS) / 500L
+            horizontalDragAmount =
+                initialDrag.dp + (snapValue - initialDrag.dp) * FastOutLinearInEasing.transform(
+                    progress.toFloat()
+                )
+        }
     }
+
     var savedHorizontalDragAmount by remember { mutableStateOf(0.dp) }
     var focusedIndex by remember { mutableStateOf(0) }
 
@@ -103,7 +124,11 @@ fun StoriesSetPlayer(
                 close = { closeEvent = true },
                 onFinishedStorySet = { focusedIndex += 1 },
                 onHorizontalDrag = { horizontalDragAmount = savedHorizontalDragAmount + it },
-                onHorizontalDragEnd = { savedHorizontalDragAmount = horizontalDragAmount }
+                onHorizontalDragEnd = {
+                    snapValue =
+                        maxWidth * (horizontalDragAmount.value / maxWidth.value).roundToInt()
+                    savedHorizontalDragAmount = snapValue
+                }
             )
         }
         Box(
