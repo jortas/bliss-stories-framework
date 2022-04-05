@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.frames
 
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -6,10 +6,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.blissstories.i9stories.StoryFrameState
+import com.example.blissstories.i9stories.utils.currentProgress
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
-import kotlinx.coroutines.delay
 
 @Composable
 fun VideoStoryFrame(
@@ -74,5 +75,3 @@ fun VideoStoryFrame(
         }
     }
 }
-
-internal const val PROGRESS_REFRESH_DELAY_MS = 200L

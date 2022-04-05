@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.components
 
 import androidx.annotation.FloatRange
 import androidx.compose.animation.core.LinearEasing
@@ -17,15 +17,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StoryProgressBar(
     modifier: Modifier,
-    @FloatRange(from = 0.0, to = 1.0) progress: Float
+    @FloatRange(from = 0.0, to = 1.0) progress: Float,
+    totalTime: Long = 0L,
+    isPlaying: Boolean = false
 ) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(
-            durationMillis = getAnimationSpeed(progress),
-            easing = LinearEasing
-        )
-    )
 
     val shape = RoundedCornerShape(8.dp)
 
@@ -39,7 +34,7 @@ fun StoryProgressBar(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(animatedProgress)
+                .fillMaxWidth(progress)
                 .background(
                     Color.White, shape
                 )
@@ -65,15 +60,3 @@ private fun BlissSliderPreview() {
         }
     }
 }
-
-private fun getAnimationSpeed(progress: Float): Int {
-    return if (progress == 0f) {
-        0
-    } else if (progress == 1f) {
-        100
-    } else {
-        PROGRESS_ANIMATION_DURATION_MS
-    }
-}
-
-private const val PROGRESS_ANIMATION_DURATION_MS = 200

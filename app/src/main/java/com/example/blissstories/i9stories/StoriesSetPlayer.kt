@@ -39,7 +39,7 @@ fun StoriesSetPlayer(
 
     BoxWithConstraints(
         modifier
-            .size(300.dp)
+            .fillMaxSize()
             .offset(x = 0.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -69,7 +69,6 @@ fun StoriesSetPlayer(
                 return
             }
             val offset = (maxSizeDp.width) * (storyIndex) + horizontalDragAmount
-            Log.d("HEY", "$index -> $storyIndex -> $focusedIndex -> $offset")
             StoriesPlayer(
                 modifier = Modifier
                     .fillMaxSize()
@@ -97,7 +96,8 @@ fun StoriesSetPlayer(
 }
 
 
-//This is for roundBobbin story player, in theory it should have 3 and indexs should be,
+//This is for roundBobbin story player, players should have the following index being 0 the first
+//in the screen, and the rest are on the left and right off the screen
 // -1 0 1
 //0 should be the first player that appears in the center
 //This function will also work with 4, 5 or more players, in these two formats

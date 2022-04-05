@@ -1,7 +1,8 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.components
 
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
+import androidx.annotation.LongDef
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -14,7 +15,7 @@ fun ComposedStoryProgressBar(
     modifier: Modifier = Modifier,
     @IntRange(from = 0) numberOfStories: Int,
     @IntRange(from = 0) currentStoryIndex: Int,
-    @FloatRange(from = 0.0, to = 1.0) progressOfCurrentStory: Float
+    @FloatRange(from = 0.0, to = 1.0) currentStoryProgress: Float
 ) {
     val storyIndicatorModifier = modifier
         .fillMaxWidth()
@@ -26,18 +27,27 @@ fun ComposedStoryProgressBar(
 
     Row(storyIndicatorModifier) {
         for (i in 0 until numberOfStories) {
-
-            val progress = when(i) {
+            val progress = when (i) {
                 in 0 until currentStoryIndex -> 1f
-                currentStoryIndex -> progressOfCurrentStory
+                currentStoryIndex -> currentStoryProgress
                 else -> 0f
             }
+
+            if (currentStoryIndex == i){
                 StoryProgressBar(
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(1f / (numberOfStories - i)),
                     progress = progress
                 )
+            }else{
+                StoryProgressBar(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(1f / (numberOfStories - i)),
+                    progress = progress
+                )
+            }
         }
     }
 }
@@ -49,7 +59,7 @@ private fun ComposedStoryProgressPreview() {
         ComposedStoryProgressBar(
             numberOfStories = 4,
             currentStoryIndex = 3,
-            progressOfCurrentStory = 0.7f
+            currentStoryProgress = 0.7f
         )
     }
 }

@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
                                 initialShape = shape,
                                 initialSize = DpSize(widthButton, heightButton),
                                 storySetsList = listOf(
+                                    staticStoryFactoryMock(),
                                     storyFactoryMock(),
                                     staticStoryFactoryMock(),
                                     staticStoryFactoryMock(),

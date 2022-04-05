@@ -12,6 +12,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.zIndex
+import com.example.blissstories.i9stories.components.ComposedStoryProgressBar
+import com.example.blissstories.i9stories.frames.StaticStoryPlayer
+import com.example.blissstories.i9stories.frames.VideoStoryFrame
 import com.example.blissstories.i9stories.utils.ExoPlayerCreator
 import com.example.blissstories.models.Story
 import com.example.blissstories.models.StorySet
@@ -57,6 +60,7 @@ fun StoriesPlayer(
     }
 
     var currentStoryIndex by remember { mutableStateOf(0) }
+    val currentStory = remember(currentStoryIndex) { storySet[currentStoryIndex] }
     val currentVideoIndex = remember(currentStoryIndex, mediaItemsIndex) {
         mediaItemsIndex[currentStoryIndex]
     }
@@ -76,6 +80,13 @@ fun StoriesPlayer(
         )
         exoPlayer.pauseAtEndOfMediaItems = true
         exoPlayer
+    }
+
+    val currentStoryTotalTime = remember(exoPlayer.duration, currentStory) {
+        when (currentStory) {
+            is Story.Static -> currentStory.duration.timeInMs
+            is Story.Video -> exoPlayer.duration
+        }
     }
 
     LaunchedEffect(currentStoryIndex) {
@@ -190,10 +201,10 @@ fun StoriesPlayer(
                     .padding(2.dp),
                 numberOfStories = storySet.size,
                 currentStoryIndex = currentStoryIndex,
-                progressOfCurrentStory = currentStoryProgress
+                currentStoryProgress = currentStoryProgress,
             )
 
-            when (val currentStory = storySet[currentStoryIndex]) {
+            when (currentStory) {
                 is Story.Video -> VideoStoryFrame(
                     modifier = Modifier
                         .size(sizeDp)
@@ -221,6 +232,10 @@ fun StoriesPlayer(
 
 enum class StoryFrameState() {
     Playing, Paused, Unknown
+}
+
+fun StoryFrameState.isPlaying(): Boolean {
+    return this == StoryFrameState.Playing
 }
 
 private const val PERCENTAGE_TO_DISMISS = 0.25f

@@ -16,7 +16,7 @@ sealed class Story() {
     ) : Story()
 
 
-    enum class Duration(val timeInMs: Int) {
+    enum class Duration(val timeInMs: kotlin.Long) {
         Short(6000), Long(12000)
     }
 }
@@ -54,7 +54,6 @@ fun storyFactoryMock(): MutableList<Story> {
     storyList.add(story4)
     return storyList
 }
-
 
 
 fun staticStoryFactoryMock(): MutableList<Story> {
