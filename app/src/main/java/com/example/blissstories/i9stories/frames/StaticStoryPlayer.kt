@@ -4,13 +4,18 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.R
@@ -59,7 +64,7 @@ fun StaticStoryPlayer(
             .fillMaxSize()
             .background(color = backgroundColor)
     ) {
-        Column() {
+        Column(Modifier.fillMaxSize()) {
             AnimatedVisibility(
                 visible = statePhase >= STATE_PHASE_PRESENT_IMAGE,
                 enter = fadeIn(tween(ANIMATION_TIME_INT)),
@@ -76,54 +81,89 @@ fun StaticStoryPlayer(
                 )
             }
 
-            AnimatedVisibility(
-                visible = statePhase >= STATE_PHASE_PRESENT_TITLE,
-                enter = fadeIn(tweenSpec()) + slideInVertically(initialOffsetY = verticalOffset()),
-                exit = fadeOut()
+            Column(
+                Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Frase Frase Frase Frase Frase Frase",
-                    modifier = Modifier
-                        .fillMaxWidth(0.5f)
-                        .padding(0.dp),
-                    style = typography.headingMedium
-                )
-            }
+                AnimatedVisibility(
+                    visible = statePhase >= STATE_PHASE_PRESENT_TITLE,
+                    enter = fadeIn(tweenSpec()) + slideInVertically(initialOffsetY = verticalOffset()),
+                    exit = fadeOut()
+                ) {
+                    Text(
+                        text = story.title,
+                        modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .padding(16.dp),
+                        style = typography.headingMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-            AnimatedVisibility(
-                visible = statePhase >= STATE_PHASE_PRESENT_DESCRIPTION,
-                enter = fadeIn(tweenSpec()) + slideInVertically(initialOffsetY = verticalOffset()),
-                exit = fadeOut()
-            ) {
-                Text(
-                    text = "Frase Frase Frase Frase Frase Frase",
-                    modifier = Modifier
-                        .fillMaxWidth(0.5f)
-                        .padding(0.dp),
-                    style = typography.captionLarge
-                )
+                AnimatedVisibility(
+                    visible = statePhase >= STATE_PHASE_PRESENT_TITLE,
+                    enter = fadeIn(tweenSpec()) + slideInVertically(initialOffsetY = verticalOffset()),
+                    exit = fadeOut()
+                ) {
+                    if (story.description != null) {
+                        Text(
+                            text = story.description,
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .padding(16.dp),
+                            style = typography.captionLarge,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                }
+
+                AnimatedVisibility(
+                    visible = statePhase >= STATE_PHASE_PRESENT_BUTTON,
+                    enter = fadeIn(tweenSpec()) + slideInVertically(initialOffsetY = verticalOffset()),
+                    exit = fadeOut()
+                ) {
+                    Button(
+                        onClick = {},
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .height(64.dp)
+                            .fillMaxWidth()
+                            .border(2.dp, MaterialTheme.colors.secondary)
+                        ,
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        Text(
+                            text = "button",
+                            modifier = Modifier.fillMaxSize(),
+                            style = typography.captionLarge,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
-    }
 
-    LaunchedEffect(onStoryProgressChange, storyElapsedTime, block = {
-        onStoryProgressChange((storyElapsedTime / story.duration.timeInMs))
-    })
+        LaunchedEffect(onStoryProgressChange, storyElapsedTime, block = {
+            onStoryProgressChange((storyElapsedTime / story.duration.timeInMs))
+        })
 
-    LaunchedEffect(story) {
-        statePhase = STATE_PHASE_INITIAL
-        delay(ANIMATION_TIME)
-        statePhase = STATE_PHASE_PRESENT_IMAGE
-        delay(ANIMATION_TIME)
-        statePhase = STATE_PHASE_PRESENT_TITLE
-        delay(ANIMATION_TIME)
-        statePhase = STATE_PHASE_PRESENT_DESCRIPTION
-        delay(story.duration.timeInMs - ANIMATION_TIME * 5)
-        statePhase = STATE_PHASE_PRESENT_TITLE
-        delay(ANIMATION_TIME)
-        statePhase = STATE_PHASE_PRESENT_IMAGE
-        delay(ANIMATION_TIME)
-        statePhase = STATE_PHASE_INITIAL
+        LaunchedEffect(story) {
+            statePhase = STATE_PHASE_INITIAL
+            delay(ANIMATION_TIME)
+            statePhase = STATE_PHASE_PRESENT_IMAGE
+            delay(ANIMATION_TIME)
+            statePhase = STATE_PHASE_PRESENT_TITLE
+            delay(ANIMATION_TIME)
+            statePhase = STATE_PHASE_PRESENT_BUTTON
+            delay(story.duration.timeInMs - ANIMATION_TIME * 5)
+            statePhase = STATE_PHASE_PRESENT_TITLE
+            delay(ANIMATION_TIME)
+            statePhase = STATE_PHASE_PRESENT_IMAGE
+            delay(ANIMATION_TIME)
+            statePhase = STATE_PHASE_INITIAL
+        }
     }
 }
 
@@ -138,7 +178,7 @@ private fun tweenSpec(): TweenSpec<Float> =
 @Composable
 private fun StaticStoryPlayerPreview() {
     StaticStoryPlayer(
-        story = Story.Static(Color.Green, Story.Duration.Short, 0),
+        story = Story.Static(Color.Green, Story.Duration.Short, "Graew", order = 1),
         playerState = StoryFrameState.Playing
     )
 }
@@ -146,7 +186,7 @@ private fun StaticStoryPlayerPreview() {
 private const val STATE_PHASE_INITIAL = 0
 private const val STATE_PHASE_PRESENT_IMAGE = 1
 private const val STATE_PHASE_PRESENT_TITLE = 2
-private const val STATE_PHASE_PRESENT_DESCRIPTION = 3
+private const val STATE_PHASE_PRESENT_BUTTON = 3
 
 private const val ANIMATION_TIME = 400L
 private const val ANIMATION_TIME_INT = ANIMATION_TIME.toInt()

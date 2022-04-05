@@ -12,6 +12,8 @@ sealed class Story() {
     data class Static(
         val color: Color,
         val duration: Duration,
+        val title: String,
+        val description: String? = null,
         override val order: Int
     ) : Story()
 
@@ -26,17 +28,19 @@ fun storyFactoryMock(): MutableList<Story> {
     val storyList = mutableListOf<Story>()
     val story0 = Story.Video(
         Uri.parse(VIDEO1),
-        order = 0
+        order = 0,
     )
     val story1 = Story.Static(
         color = Color.Blue,
         duration = Story.Duration.Short,
-        order = 1
+        order = 1,
+        title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     val story2 = Story.Static(
         color = Color.Yellow,
         duration = Story.Duration.Short,
-        order = 2
+        order = 2,
+        title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     val story3 = Story.Video(
         Uri.parse(VIDEO1),
@@ -45,7 +49,8 @@ fun storyFactoryMock(): MutableList<Story> {
     val story4 = Story.Static(
         color = Color.Gray,
         duration = Story.Duration.Short,
-        order = 2
+        order = 2,
+        title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     storyList.add(story0)
     storyList.add(story1)
@@ -61,17 +66,20 @@ fun staticStoryFactoryMock(): MutableList<Story> {
     val story1 = Story.Static(
         color = Color.Blue,
         duration = Story.Duration.Short,
-        order = 1
+        order = 1,
+        title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     val story2 = Story.Static(
         color = Color.Yellow,
         duration = Story.Duration.Short,
-        order = 2
+        order = 2,
+        title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     val story4 = Story.Static(
         color = Color.Gray,
         duration = Story.Duration.Short,
-        order = 2
+        order = 2,
+        title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     storyList.add(story1)
     storyList.add(story2)
