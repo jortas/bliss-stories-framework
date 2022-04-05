@@ -26,6 +26,7 @@ import kotlin.math.tanh
 @Composable
 fun StoriesPlayer(
     modifier: Modifier,
+    cornerRadius: Dp,
     storySet: StorySet?,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
@@ -191,14 +192,15 @@ fun StoriesPlayer(
                     end = paddingAmount / proportion / 2,
                     bottom = paddingAmount
                 )
-                .clip(RoundedCornerShape(topOffset / CORNER_RADIUS_PROPORTION))
+                //.clip(RoundedCornerShape(topOffset / CORNER_RADIUS_PROPORTION))
+                .clip(RoundedCornerShape(cornerRadius))
 
 
         ) {
             ComposedStoryProgressBar(
                 modifier = Modifier
                     .zIndex(2f)
-                    .padding(2.dp),
+                    .padding(16.dp),
                 numberOfStories = storySet.size,
                 currentStoryIndex = currentStoryIndex,
                 currentStoryProgress = currentStoryProgress,
@@ -223,7 +225,8 @@ fun StoriesPlayer(
                     onStoryProgressChange = {
                         currentStoryProgress = it
                     },
-                    onStoryFinished = { currentStoryIndex++ }
+                    onStoryFinished = { currentStoryIndex++ },
+                    animateFixedItems = currentStoryIndex == 0
                 )
             }
         }

@@ -26,7 +26,6 @@ fun StoryProgressBar(
 
     Box(
         modifier = modifier
-            .padding(1.dp)
             .background(
                 Color.Gray, shape
             )

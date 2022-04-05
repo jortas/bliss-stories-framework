@@ -1,9 +1,7 @@
 package com.example.blissstories
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.remember
+import androidx.compose.material.ButtonColors
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -57,4 +55,18 @@ fun typography(): Typography {
 @Composable
 internal fun rememberTypography(): Typography {
     return remember() { typography() }
+}
+
+@Stable
+class ThemeButtonColors(private val textColor: Color) : ButtonColors {
+
+    @Composable
+    override fun backgroundColor(enabled: Boolean): State<Color> {
+        return rememberUpdatedState(Color.White)
+    }
+
+    @Composable
+    override fun contentColor(enabled: Boolean): State<Color> {
+        return rememberUpdatedState(textColor)
+    }
 }

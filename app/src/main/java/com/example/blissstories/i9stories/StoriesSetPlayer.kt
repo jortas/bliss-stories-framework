@@ -1,17 +1,19 @@
 package com.example.blissstories.i9stories
 
-import android.util.Log
-import androidx.compose.animation.core.animateSizeAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import com.example.blissstories.models.StorySet
 import com.example.blissstories.utills.animateDpSIzeAsState
+import kotlin.math.abs
 
 @Composable
 fun StoriesSetPlayer(
@@ -40,6 +42,7 @@ fun StoriesSetPlayer(
     BoxWithConstraints(
         modifier
             .fillMaxSize()
+            .background(Color.Black)
             .offset(x = 0.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -69,32 +72,52 @@ fun StoriesSetPlayer(
                 return
             }
             val offset = (maxSizeDp.width) * (storyIndex) + horizontalDragAmount
+            //from 0.9f to 1f
+            val fractionOfSize by remember(horizontalDragAmount) {
+                mutableStateOf(
+                    middleMinInterpolation(
+                        horizontalDragAmount,
+                        maxSizeDp.width,
+                        MIN_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION,
+                        MAX_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION,
+                    )
+                )
+            }
+
+            val radiusSize = remember(horizontalDragAmount) {
+                MAX_RADIUS_IN_HORIZONTAL_TRANSITION.dp * middleMinInterpolation(
+                    horizontalDragAmount,
+                    maxSizeDp.width,
+                    MAX_RADIUS_FRACTION_IN_HORIZONTAL_TRANSITION,
+                    MIN_RADIUS_FRACTION_IN_HORIZONTAL_TRANSITION,
+                )
+            }
+
+
             StoriesPlayer(
+                cornerRadius = radiusSize,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxSize(fractionOfSize)
                     .offset(x = offset),
                 storySet = storySetsList[storyIndex],
                 close = { closeEvent = true },
                 onFinishedStorySet = { focusedIndex += 1 },
                 onHorizontalDrag = { horizontalDragAmount = savedHorizontalDragAmount + it },
-                onHorizontalDragEnd = {
-                    savedHorizontalDragAmount = horizontalDragAmount
-                    focusedIndex += 1
-                }
+                onHorizontalDragEnd = { savedHorizontalDragAmount = horizontalDragAmount }
             )
         }
-
-        Box(Modifier.size(size)) {
+        Box(
+            Modifier
+                .size(size),
+            contentAlignment = Alignment.Center
+        ) {
             val roundBobbinSize = remember { 4 }
             for (i in -(roundBobbinSize - 1) / 2..roundBobbinSize / 2) {
                 StoriesPlayerForSet(i, roundBobbinSize)
             }
         }
     }
-
-
 }
-
 
 //This is for roundBobbin story player, players should have the following index being 0 the first
 //in the screen, and the rest are on the left and right off the screen
@@ -109,3 +132,29 @@ fun indexOfStoriesRoundBobbin(
 ): Int {
     return (((currentFocusedIndex - playerIndex + roundBobbinSize / 2) / roundBobbinSize)) * roundBobbinSize + playerIndex
 }
+
+//Cyclic interpolation of a value starting in max going to min in the middle of the cycle
+// and coming back to max in the end of the cycle
+// MIN + | x % w - w/2| / (w/2) (MAX - MIN)
+fun middleMinInterpolation(
+    x: Dp,
+    intervalCycle: Dp,
+    minValue: Float,
+    maxValue: Float
+): Float {
+    return minValue + (abs(abs(x) % intervalCycle - intervalCycle / 2) / (intervalCycle / 2) * (maxValue - minValue))
+}
+
+fun abs(dp: Dp): Dp {
+    return abs(dp.value).dp
+}
+
+private operator fun Dp.rem(other: Dp): Dp {
+    return (this.value % other.value).dp
+}
+
+private const val MAX_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION = 1f
+private const val MIN_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION = 0.9f
+private const val MAX_RADIUS_IN_HORIZONTAL_TRANSITION = 24
+private const val MAX_RADIUS_FRACTION_IN_HORIZONTAL_TRANSITION = 1f
+private const val MIN_RADIUS_FRACTION_IN_HORIZONTAL_TRANSITION = 0f

@@ -1,5 +1,6 @@
 package com.example.blissstories.i9stories.components
 
+import android.inputmethodservice.Keyboard
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
 import androidx.annotation.LongDef
@@ -25,7 +26,7 @@ fun ComposedStoryProgressBar(
         throw RuntimeException("CurrentStory Index $currentStoryIndex bigger than $numberOfStories")
     }
 
-    Row(storyIndicatorModifier) {
+    Row(storyIndicatorModifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         for (i in 0 until numberOfStories) {
             val progress = when (i) {
                 in 0 until currentStoryIndex -> 1f
@@ -33,14 +34,14 @@ fun ComposedStoryProgressBar(
                 else -> 0f
             }
 
-            if (currentStoryIndex == i){
+            if (currentStoryIndex == i) {
                 StoryProgressBar(
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(1f / (numberOfStories - i)),
                     progress = progress
                 )
-            }else{
+            } else {
                 StoryProgressBar(
                     modifier = Modifier
                         .fillMaxHeight()
