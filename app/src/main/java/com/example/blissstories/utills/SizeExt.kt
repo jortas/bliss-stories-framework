@@ -35,7 +35,7 @@ private val DpSizeToVector: TwoWayConverter<DpSize, AnimationVector2D> =
     )
 
 @Composable
-fun animateDpSIzeAsState(
+fun animateDpSizeAsState(
     targetValue: DpSize,
     animationSpec: AnimationSpec<DpSize> = sizeDefaultSpring,
     finishedListener: ((DpSize) -> Unit)? = null

@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
@@ -18,6 +19,7 @@ import com.example.blissstories.i9stories.frames.VideoStoryFrame
 import com.example.blissstories.i9stories.utils.ExoPlayerCreator
 import com.example.blissstories.models.Story
 import com.example.blissstories.models.StorySet
+import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
 import com.google.android.exoplayer2.MediaItem
@@ -27,6 +29,7 @@ import kotlin.math.tanh
 fun StoriesPlayer(
     modifier: Modifier,
     cornerRadius: Dp,
+    fractionOfSize: Float,
     storySet: StorySet?,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
@@ -41,7 +44,7 @@ fun StoriesPlayer(
         return
     }
 
-    val mediaItems = remember(storySet) {
+    val videoMediaItems = remember(storySet) {
         storySet.filterIsInstance(Story.Video::class.java).map { MediaItem.fromUri(it.video) }
     }
 
@@ -51,7 +54,7 @@ fun StoriesPlayer(
         var currentIndex = 0
         storySet.map {
             currentIndex = nextIndex
-            if (it is Story.Video && currentIndex < mediaItems.size - 1) {
+            if (it is Story.Video && currentIndex < videoMediaItems.size - 1) {
                 nextIndex++
                 currentIndex
             } else {
@@ -72,7 +75,7 @@ fun StoriesPlayer(
     val exoPlayer = remember {
         val exoPlayer = ExoPlayerCreator.createExoPlayer(
             context,
-            mediaItems,
+            videoMediaItems,
             onStateChange = { newState -> playerState = newState },
             onVideoChange = {
                 currentStoryIndex = it
@@ -81,13 +84,6 @@ fun StoriesPlayer(
         )
         exoPlayer.pauseAtEndOfMediaItems = true
         exoPlayer
-    }
-
-    val currentStoryTotalTime = remember(exoPlayer.duration, currentStory) {
-        when (currentStory) {
-            is Story.Static -> currentStory.duration.timeInMs
-            is Story.Video -> exoPlayer.duration
-        }
     }
 
     LaunchedEffect(currentStoryIndex) {
@@ -132,27 +128,31 @@ fun StoriesPlayer(
                 maxHeight.value
             )
         }
-        val sizeDp = remember(size) {
-            size.toDpSize()
-        }
-
-        val sizePx = remember(sizeDp) {
-            sizeDp.toPx(density)
-        }
+        val sizeDp = remember(size) { size.toDpSize() }
+        val sizePx = remember(sizeDp) { sizeDp.toPx(density) }
         val proportion = remember(sizeDp) { sizeDp.height / sizeDp.width }
 
         var totalVerticalDragAmount by remember { mutableStateOf(0.dp) }
 
-
+        val limitVerticalDrag = remember(maxHeight) {
+            maxHeight.value - maxHeight.value / GOLD_RATIO
+        }
         val topOffset = remember(totalVerticalDragAmount) {
-            val x = totalVerticalDragAmount
-            with(density) {
-                (tanh(x / (maxHeight - maxHeight / GOLD_RATIO)) * (maxHeight - maxHeight / GOLD_RATIO).value).toDp()
-            }
+            hyperbolicTangentInterpolator(
+                totalVerticalDragAmount.value,
+                0f,
+                limitVerticalDrag
+            ).dp
         }
 
-        val paddingAmount = remember(topOffset) {
-            topOffset / PADDING_PROPORTION
+        val scale = remember(topOffset) {
+            val progress = topOffset.value / limitVerticalDrag
+            1f - (1f - MIN_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION) * progress
+        }
+
+        val radius = remember(topOffset) {
+            val progress = topOffset.value / limitVerticalDrag
+            (1f - (1f - MAX_RADIUS_IN_HORIZONTAL_TRANSITION) * progress).dp
         }
 
         val gesturesModifier =
@@ -178,22 +178,15 @@ fun StoriesPlayer(
                     onHorizontalDragEnd = onHorizontalDragEnd
                 )
 
-
         val newModifier = remember(gesturesModifier, sizeDp) {
             gesturesModifier.size(sizeDp)
         }
 
-
         Box(
             newModifier
                 .offset(x = 0.dp, y = topOffset)
-                .padding(
-                    start = paddingAmount / proportion / 2,
-                    end = paddingAmount / proportion / 2,
-                    bottom = paddingAmount
-                )
-                //.clip(RoundedCornerShape(topOffset / CORNER_RADIUS_PROPORTION))
-                .clip(RoundedCornerShape(cornerRadius))
+                .scale(fractionOfSize * scale)
+                .clip(RoundedCornerShape(cornerRadius + radius))
 
 
         ) {
@@ -242,6 +235,4 @@ fun StoryFrameState.isPlaying(): Boolean {
 }
 
 private const val PERCENTAGE_TO_DISMISS = 0.25f
-private const val GOLD_RATIO = 1.612f
-private const val PADDING_PROPORTION = GOLD_RATIO * 4
-private const val CORNER_RADIUS_PROPORTION = GOLD_RATIO * 8
+const val GOLD_RATIO = 1.612f
