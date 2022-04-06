@@ -44,14 +44,14 @@ fun StoriesPlayer(
     }
 
     val videoMediaItems = remember(storySet) {
-        storySet.filterIsInstance(Story.Video::class.java).map { MediaItem.fromUri(it.video) }
+        storySet.stories.filterIsInstance(Story.Video::class.java).map { MediaItem.fromUri(it.video) }
     }
 
     //This val corresponds to the index of the video the exoplayer should be in
     val mediaItemsIndex = remember(storySet) {
         var nextIndex = 0
         var currentIndex = 0
-        storySet.map {
+        storySet.stories.map {
             currentIndex = nextIndex
             if (it is Story.Video && currentIndex < videoMediaItems.size - 1) {
                 nextIndex++
@@ -64,7 +64,7 @@ fun StoriesPlayer(
 
     var currentStoryIndex by remember { mutableStateOf(0) }
     val currentStory = remember(currentStoryIndex) {
-        storySet[currentStoryIndex] }
+        storySet.stories[currentStoryIndex] }
     val currentVideoIndex = remember(currentStoryIndex, mediaItemsIndex) {
         mediaItemsIndex[currentStoryIndex]
     }
@@ -107,7 +107,7 @@ fun StoriesPlayer(
             }
             TapType.ShortCenter,
             TapType.ShortRight -> {
-                if (currentStoryIndex == storySet.lastIndex) {
+                if (currentStoryIndex ==  storySet.stories.lastIndex) {
                     onFinishedStorySet()
                 } else {
                     currentStoryProgress = 0f
@@ -194,7 +194,7 @@ fun StoriesPlayer(
                 modifier = Modifier
                     .zIndex(2f)
                     .padding(16.dp),
-                numberOfStories = storySet.size,
+                numberOfStories =  storySet.stories.size,
                 currentStoryIndex = currentStoryIndex,
                 currentStoryProgress = currentStoryProgress,
             )

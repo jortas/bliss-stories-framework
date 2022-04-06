@@ -1,4 +1,4 @@
-package com.example.blissstories
+package com.example.blissstories.projectutils
 
 import androidx.compose.material.ButtonColors
 import androidx.compose.runtime.*

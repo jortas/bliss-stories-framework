@@ -35,7 +35,7 @@ fun StoriesSetPlayer(
     close: () -> Unit,
     onFinishedStorySets: () -> Unit = {},
 ) {
-    val shape = RoundedCornerShape(4.dp)
+    val shape = RoundedCornerShape(0.dp)
     val horizontalDragAmount = remember { mutableStateOf(0.dp) }
     val snapValue: MutableState<Dp?> = remember { mutableStateOf(null) }
     val savedHorizontalDragAmount = remember { mutableStateOf(0.dp) }
@@ -54,7 +54,6 @@ fun StoriesSetPlayer(
     BoxWithConstraints(
         modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(0.dp))
             .background(Color.Black)
             .offset(x = 0.dp),
         contentAlignment = Alignment.Center
@@ -82,7 +81,9 @@ fun StoriesSetPlayer(
 
         Box(
             Modifier
-                .scale(size.width.value / maxWidth.value, size.height.value / maxHeight.value),
+                .scale(size.width.value / maxWidth.value, size.height.value / maxHeight.value)
+                .clip(shape)
+            ,
             contentAlignment = Alignment.Center
         ) {
             val roundBobbinSize = remember { 4 }

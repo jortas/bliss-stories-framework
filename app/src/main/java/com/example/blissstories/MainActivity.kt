@@ -1,21 +1,24 @@
 package com.example.blissstories
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.compose.foundation.layout.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.i9stories.StoriesSetPlayer
-import com.example.blissstories.models.staticStoryFactoryMock
-import com.example.blissstories.models.storyFactoryMock
+import com.example.blissstories.models.mocks.staticStoryFactoryMock
 import com.example.blissstories.utills.ButtonForStory
 
 class MainActivity : AppCompatActivity() {
@@ -37,6 +40,7 @@ class MainActivity : AppCompatActivity() {
                     var open by remember {
                         mutableStateOf(false)
                     }
+
                     BoxWithConstraints(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -54,11 +58,11 @@ class MainActivity : AppCompatActivity() {
                                 initialSize = DpSize(widthButton, heightButton),
                                 storySetsList = listOf(
                                     staticStoryFactoryMock(),
-                                 //   storyFactoryMock(),
-                                 //   staticStoryFactoryMock(),
-                                 //   staticStoryFactoryMock(),
-                                 //   staticStoryFactoryMock(),
-                                 //   staticStoryFactoryMock()
+                                //    storyFactoryMock(),
+                                    //   staticStoryFactoryMock(),
+                                    //   staticStoryFactoryMock(),
+                                    //   staticStoryFactoryMock(),
+                                    //   staticStoryFactoryMock()
                                 ),
                                 close = { open = false },
                                 onFinishedStorySets = {}

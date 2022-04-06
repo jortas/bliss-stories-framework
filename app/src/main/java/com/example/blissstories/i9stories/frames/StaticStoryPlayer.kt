@@ -21,11 +21,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.R
-import com.example.blissstories.ThemeButtonColors
+import com.example.blissstories.projectutils.ThemeButtonColors
 import com.example.blissstories.i9stories.StoryFrameState
 import com.example.blissstories.i9stories.isPlaying
 import com.example.blissstories.models.Story
-import com.example.blissstories.rememberTypography
+import com.example.blissstories.projectutils.rememberTypography
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -192,7 +192,7 @@ private fun storyAnimate(
 @Composable
 private fun StaticStoryPlayerPreview() {
     StaticStoryPlayer(
-        story = Story.Static(Color.Gray, Story.Duration.Short, "Graew", order = 1),
+        story = Story.Static(Color.Gray, Story.Static.Duration.Short, "Graew", order = 1),
         playerState = StoryFrameState.Playing
     )
 }
