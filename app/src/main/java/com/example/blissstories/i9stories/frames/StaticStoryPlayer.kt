@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.example.blissstories.R
 import com.example.blissstories.ThemeButtonColors
 import com.example.blissstories.i9stories.StoryFrameState
+import com.example.blissstories.i9stories.isPlaying
 import com.example.blissstories.models.Story
 import com.example.blissstories.rememberTypography
 import org.threeten.bp.LocalDateTime
@@ -37,49 +38,54 @@ fun StaticStoryPlayer(
     onStoryFinished: () -> Unit = {},
     animateFixedItems: Boolean = false
 ) {
-    var storyElapsedTime by remember(story) {
+    var storyElapsedPlayingTime by remember(story) {
         mutableStateOf(0f)
     }
-
+    var storyElapsedPausedTime by remember(story) {
+        mutableStateOf(0f)
+    }
     val startedPlayingTime = remember(story, playerState) {
         LocalDateTime.now()
     }
 
     val typography = rememberTypography()
 
-    LaunchedEffect(story, playerState, storyElapsedTime) {
-        if (storyElapsedTime < story.duration.timeInMs && playerState == StoryFrameState.Playing) {
-            val elapsedTime = startedPlayingTime.until(LocalDateTime.now(), ChronoUnit.MILLIS)
-            storyElapsedTime = elapsedTime.toFloat()
-        }
-
-        if (storyElapsedTime >= story.duration.timeInMs) {
+    LaunchedEffect(story, playerState, storyElapsedPlayingTime) {
+        val elapsedTime = startedPlayingTime.until(LocalDateTime.now(), ChronoUnit.MILLIS)
+        if (storyElapsedPlayingTime < story.duration.timeInMs) {
+            if (playerState.isPlaying()) {
+                storyElapsedPlayingTime = elapsedTime.toFloat() - storyElapsedPausedTime
+            } else {
+                storyElapsedPausedTime = elapsedTime.toFloat() - storyElapsedPlayingTime
+            }
+        } else {
             onStoryFinished()
         }
+
     }
 
     val animatedColor by animateColorAsState(targetValue = story.color)
 
-    val imageAlpha = remember(storyElapsedTime) {
+    val imageAlpha = remember(storyElapsedPlayingTime) {
         if (animateFixedItems) {
-            storyAnimate(storyElapsedTime, story.duration.timeInMs, 0,)
-        }else{
+            storyAnimate(storyElapsedPlayingTime, story.duration.timeInMs, 0)
+        } else {
             1f
         }
     }
 
-    val textAlpha = remember(storyElapsedTime) {
-        storyAnimate(storyElapsedTime, story.duration.timeInMs, 1, true)
+    val textAlpha = remember(storyElapsedPlayingTime) {
+        storyAnimate(storyElapsedPlayingTime, story.duration.timeInMs, 1, true)
     }
 
-    val textOffset = remember(storyElapsedTime) {
-        32.dp * (1f - storyAnimate(storyElapsedTime, story.duration.timeInMs, 1))
+    val textOffset = remember(storyElapsedPlayingTime) {
+        32.dp * (1f - storyAnimate(storyElapsedPlayingTime, story.duration.timeInMs, 1))
     }
 
-    val buttonAlpha = remember(storyElapsedTime) {
-        if (animateFixedItems){
-            storyAnimate(storyElapsedTime, story.duration.timeInMs, 2)
-        }else{
+    val buttonAlpha = remember(storyElapsedPlayingTime) {
+        if (animateFixedItems) {
+            storyAnimate(storyElapsedPlayingTime, story.duration.timeInMs, 2)
+        } else {
             1f
         }
     }
@@ -87,9 +93,13 @@ fun StaticStoryPlayer(
     Box(
         modifier
             .fillMaxSize()
-            .background(color = animatedColor)
+            .background(color = animatedColor),
+        contentAlignment = Alignment.TopCenter
     ) {
-        Column(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxHeight(0.5f)
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.image),
                 contentDescription = "",
@@ -97,7 +107,7 @@ fun StaticStoryPlayer(
                 modifier = Modifier
                     .alpha(imageAlpha)
                     .aspectRatio(1f)
-                    .fillMaxHeight(0.5f)
+                    .fillMaxHeight()
                     .padding(0.dp)
             )
         }
@@ -136,7 +146,7 @@ fun StaticStoryPlayer(
                 onClick = {},
                 modifier = Modifier
                     .padding(16.dp)
-                    .height(64.dp)
+                    .height(48.dp)
                     .align(Alignment.CenterHorizontally)
                     .alpha(buttonAlpha)
                     .fillMaxWidth()
@@ -153,8 +163,8 @@ fun StaticStoryPlayer(
         }
     }
 
-    LaunchedEffect(onStoryProgressChange, storyElapsedTime, block = {
-        onStoryProgressChange((storyElapsedTime / story.duration.timeInMs))
+    LaunchedEffect(onStoryProgressChange, storyElapsedPlayingTime, block = {
+        onStoryProgressChange((storyElapsedPlayingTime / story.duration.timeInMs))
     })
 
 }
@@ -182,7 +192,7 @@ private fun storyAnimate(
 @Composable
 private fun StaticStoryPlayerPreview() {
     StaticStoryPlayer(
-        story = Story.Static(Color.Green, Story.Duration.Short, "Graew", order = 1),
+        story = Story.Static(Color.Gray, Story.Duration.Short, "Graew", order = 1),
         playerState = StoryFrameState.Playing
     )
 }

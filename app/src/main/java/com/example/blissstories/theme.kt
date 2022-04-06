@@ -70,3 +70,5 @@ class ThemeButtonColors(private val textColor: Color) : ButtonColors {
         return rememberUpdatedState(textColor)
     }
 }
+
+fun Color.Companion.AquaGreen(): Color = Color(0xFF429289)

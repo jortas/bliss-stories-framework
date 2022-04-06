@@ -2,6 +2,7 @@ package com.example.blissstories.models
 
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
+import com.example.blissstories.AquaGreen
 
 typealias StorySet = List<Story>
 
@@ -64,13 +65,13 @@ fun storyFactoryMock(): MutableList<Story> {
 fun staticStoryFactoryMock(): MutableList<Story> {
     val storyList = mutableListOf<Story>()
     val story1 = Story.Static(
-        color = Color.Blue,
+        color = Color.AquaGreen(),
         duration = Story.Duration.Short,
         order = 1,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     val story2 = Story.Static(
-        color = Color.Yellow,
+        color = Color.AquaGreen(),
         duration = Story.Duration.Short,
         order = 2,
         title = "Title Title Title Title Title Title Title Title Title Title Title "

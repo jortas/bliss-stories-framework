@@ -92,14 +92,14 @@ fun StoriesSetPlayer(
                 }
                 if (storySetIndex >= 0 && storySetIndex <= storySetsList.lastIndex) {
                     val horizontalOffset =
-                        remember(horizontalDragAmount) { (maxSizeDp.width) * (storySetIndex) + horizontalDragAmount.value }
+                        remember(horizontalDragAmount.value) { (maxSizeDp.width) * (storySetIndex) + horizontalDragAmount.value }
 
                     //from 0.9f to 1f
-                    val fractionOfSize = remember(horizontalDragAmount) {
+                    val fractionOfSize = remember(horizontalDragAmount.value) {
                         scaleOnHorizontalDrag(horizontalDragAmount.value, maxSizeDp.width)
                     }
 
-                    val radiusSize = remember(horizontalDragAmount) {
+                    val radiusSize = remember(horizontalDragAmount.value) {
                         radiusOnHorizontalDrag(horizontalDragAmount.value, maxSizeDp.width)
                     }
 
@@ -111,15 +111,15 @@ fun StoriesSetPlayer(
                         fractionOfSize = fractionOfSize,
                         close = { closeEvent = true },
                         onFinishedStorySet = { focusedIndex += 1 },
-                        onHorizontalDrag =
+                        onHorizontalDrag = { drag ->
                             onHorizontalDrag(
                                 storySetIndex,
                                 storySetsList.lastIndex,
                                 limitDragOnNull,
                                 horizontalDragAmount,
                                 savedHorizontalDragAmount.value
-                            )
-                        ,
+                            )(drag)
+                        },
                         onHorizontalDragEnd = {
                             savedHorizontalDragAmount.value = horizontalDragAmount.value
                             snapValue.value =
@@ -186,7 +186,6 @@ private fun scaleOnHorizontalDrag(
     MAX_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION,
 )
 
-@Composable
 private fun onHorizontalDrag(
     storySetIndex: Int,
     storySetLastIndex: Int,

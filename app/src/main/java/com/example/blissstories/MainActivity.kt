@@ -48,17 +48,17 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.size(widthButton, heightButton),
                             onClick = { open = true }
                         )
-                        if (open || true) {
+                        if (open) {
                             StoriesSetPlayer(
                                 initialShape = shape,
                                 initialSize = DpSize(widthButton, heightButton),
                                 storySetsList = listOf(
                                     staticStoryFactoryMock(),
-                                    storyFactoryMock(),
-                                    staticStoryFactoryMock(),
-                                    staticStoryFactoryMock(),
-                                    staticStoryFactoryMock(),
-                                    staticStoryFactoryMock()
+                                 //   storyFactoryMock(),
+                                 //   staticStoryFactoryMock(),
+                                 //   staticStoryFactoryMock(),
+                                 //   staticStoryFactoryMock(),
+                                 //   staticStoryFactoryMock()
                                 ),
                                 close = { open = false },
                                 onFinishedStorySets = {}

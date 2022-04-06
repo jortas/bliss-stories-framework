@@ -23,7 +23,6 @@ import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
 import com.google.android.exoplayer2.MediaItem
-import kotlin.math.tanh
 
 @Composable
 fun StoriesPlayer(
@@ -64,7 +63,8 @@ fun StoriesPlayer(
     }
 
     var currentStoryIndex by remember { mutableStateOf(0) }
-    val currentStory = remember(currentStoryIndex) { storySet[currentStoryIndex] }
+    val currentStory = remember(currentStoryIndex) {
+        storySet[currentStoryIndex] }
     val currentVideoIndex = remember(currentStoryIndex, mediaItemsIndex) {
         mediaItemsIndex[currentStoryIndex]
     }
@@ -146,13 +146,13 @@ fun StoriesPlayer(
         }
 
         val scale = remember(topOffset) {
-            val progress = topOffset.value / limitVerticalDrag
-            1f - (1f - MIN_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION) * progress
+            val percentage = topOffset.value / limitVerticalDrag
+            1f - (1f - MIN_SIZE_FRACTION_IN_HORIZONTAL_TRANSITION) * percentage
         }
 
         val radius = remember(topOffset) {
-            val progress = topOffset.value / limitVerticalDrag
-            (1f - (1f - MAX_RADIUS_IN_HORIZONTAL_TRANSITION) * progress).dp
+            val percentage = topOffset.value / limitVerticalDrag
+            (1f - (1f - MAX_RADIUS_IN_HORIZONTAL_TRANSITION) * percentage).dp
         }
 
         val gesturesModifier =
