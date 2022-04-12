@@ -1,5 +1,10 @@
 package com.example.blissstories.models
 
+import android.content.Context
+import androidx.compose.ui.graphics.Color
+import com.example.blissstories.projectutils.colorComposeKey
+import com.example.blissstories.projectutils.colorKey
+import com.example.blissstories.projectutils.resourceProvider
 import com.example.blissstories.projectutils.resources.ColorKeyResource
 import com.example.blissstories.projectutils.resources.ImageKeyResource
 import com.example.blissstories.projectutils.resources.VisualResource
@@ -9,7 +14,15 @@ data class StoryPreview(
     val illustration: ImageKeyResource?,
     val background: VisualResource,
     val titleColor: ColorKeyResource
-)
-
+) {
+    fun backgroundColor(context: Context): Color {
+        val defaultColor = Color.Black
+        return if (background is ColorKeyResource) {
+            context.resourceProvider.colorComposeKey(background) ?: defaultColor
+        } else {
+            defaultColor
+        }
+    }
+}
 
 

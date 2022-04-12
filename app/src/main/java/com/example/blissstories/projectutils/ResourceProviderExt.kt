@@ -3,6 +3,7 @@
 package com.example.blissstories.projectutils
 
 import android.graphics.drawable.Drawable
+import androidx.compose.ui.graphics.Color
 import com.example.blissstories.projectutils.resources.ColorKeyResource
 import com.example.blissstories.projectutils.resources.ImageKeyResource
 import java.util.*
@@ -20,6 +21,14 @@ inline fun ResourceProvider.colorKey(resource: ColorKeyResource): Int? {
     val id =
         context.resources.getIdentifier("i9_$colorKeyHandled", "color", context.packageName)
     return if (id != 0) color(id) else null
+}
+
+inline fun ResourceProvider.colorComposeKey(resource: ColorKeyResource): Color? {
+    val colorKey = resource.key
+    val colorKeyHandled = handleColorName(colorKey)
+    val id =
+        context.resources.getIdentifier(colorKeyHandled, "color", context.packageName)
+    return if (id != 0) Color(id) else null
 }
 
 inline fun ResourceProvider.handleColorName(colorKey: String): String {
