@@ -12,7 +12,7 @@ import com.example.blissstories.projectutils.resources.ImageKeyResource
 
 fun storyPreviewMock(): StoryPreview {
     return StoryPreview(
-        "Title",
+        "This Title has 36 characters. Title.",
         ImageKeyResource(key = "image.jpg"),
         background = ColorKeyResource(key = "AquaGreen"),
         titleColor = ColorKeyResource(key = "White")

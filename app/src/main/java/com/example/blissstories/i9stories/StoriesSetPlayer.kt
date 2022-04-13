@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -18,6 +19,7 @@ import com.example.blissstories.models.StorySet
 import com.example.blissstories.utills.animateDpSizeAsState
 import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.middleMinInterpolation
+import kotlinx.coroutines.delay
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.temporal.ChronoUnit
 import kotlin.math.abs
@@ -27,23 +29,16 @@ import kotlin.math.sign
 @Composable
 fun StoriesSetPlayer(
     modifier: Modifier = Modifier,
+    initialStorySetIndex: Int = 0,
     initialRadius: Dp = 4.dp,
     initialSize: DpSize = DpSize(1.dp, 1.dp),
     initialPosition: Offset = Offset(0f, 0f),
-    animateEntry: Boolean = true,
     storySetsList: List<StorySet>,
     close: () -> Unit,
     onFinishedStorySets: () -> Unit = {},
 ) {
 
-    val horizontalDragAmount = remember { mutableStateOf(0.dp) }
-    val snapValue: MutableState<Dp?> = remember { mutableStateOf(null) }
-    val savedHorizontalDragAmount = remember { mutableStateOf(0.dp) }
-    val animatingHorizontalDrag = remember { mutableStateOf(false) }
-
-    SnapOnDrag(snapValue, horizontalDragAmount, animatingHorizontalDrag, savedHorizontalDragAmount)
-
-    var focusedIndex by remember { mutableStateOf(0) }
+    var focusedIndex by remember(initialStorySetIndex) { mutableStateOf(initialStorySetIndex) }
     var justLaunched by remember { mutableStateOf(true) }
     var closeEvent by remember { mutableStateOf(false) }
 
@@ -51,52 +46,81 @@ fun StoriesSetPlayer(
         justLaunched = false
     }
 
+    val entryAnimation = remember(
+        justLaunched,
+        closeEvent
+    ) { justLaunched || closeEvent }
+
+    val alphaBackground by animateFloatAsState(
+        targetValue = if (entryAnimation) 0f else 1f,
+        animationSpec = storiesSetAnimationSpec(0.8f, entryAnimation)
+    )
+
     BoxWithConstraints(
         modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Black.copy(alphaBackground))
             .offset(x = 0.dp),
         contentAlignment = Alignment.Center
     ) {
+        LaunchedEffect(closeEvent) {
+            if (closeEvent) {
+                delay(ANIMATION_ENTRY_DURATION)
+                close()
+                closeEvent = false
+            }
+        }
+
+        val radius by animateDpAsState(
+            targetValue = if (entryAnimation) initialRadius else 0.dp,
+            animationSpec = storiesSetAnimationSpec()
+        )
+
+        val shape = remember(radius) { RoundedCornerShape(radius) }
+        val alpha by animateFloatAsState(
+            targetValue = if (entryAnimation) 0f else 1f,
+            animationSpec = storiesSetAnimationSpec(0.2f, entryAnimation)
+        )
+
         val maxSizeDp = remember(maxWidth, maxHeight) {
             DpSize(
                 maxWidth,
                 maxHeight
             )
         }
+        val horizontalDragAmount =
+            remember(initialStorySetIndex) { mutableStateOf(-maxSizeDp.width * initialStorySetIndex) }
+
+        val snapValue: MutableState<Dp?> = remember { mutableStateOf(null) }
+        val savedHorizontalDragAmount = remember { mutableStateOf(-maxSizeDp.width * initialStorySetIndex) }
+        val animatingHorizontalDrag = remember { mutableStateOf(false) }
+
+        SnapOnDrag(
+            snapValue,
+            horizontalDragAmount,
+            animatingHorizontalDrag,
+            savedHorizontalDragAmount
+        )
 
         val limitDragOnNull = remember(maxSizeDp) {
             maxSizeDp.width.value - maxSizeDp.width.value / GOLD_RATIO
         }
 
         val initialOffset = remember(initialPosition) {
-            Offset(initialPosition.x - maxWidth.value/2, initialPosition.y - maxHeight.value/2)
+            Offset(
+                initialPosition.x - maxWidth.value / 2,
+                initialPosition.y - maxHeight.value / 2
+            )
         }
 
         val size by animateDpSizeAsState(
-            targetValue = if (justLaunched && animateEntry || closeEvent) initialSize else {
-                maxSizeDp
-            },
-            animationSpec = AnimationSpec
-            , finishedListener = { size ->
-                if (closeEvent) {
-                    close()
-                    closeEvent = false
-                }
-            })
-
-        val radius by animateDpAsState(
-            targetValue = if (justLaunched && animateEntry || closeEvent) initialRadius else {
-                0.dp
-            }
+            targetValue = if (entryAnimation) initialSize else maxSizeDp,
+            animationSpec = storiesSetAnimationSpec()
         )
 
-        val shape = remember(radius) { RoundedCornerShape(radius) }
-
         val offset by animateOffsetAsState(
-            targetValue = if (justLaunched && animateEntry || closeEvent) initialOffset else {
-                Offset(0f, 0f)
-            }
+            targetValue = if (entryAnimation) initialOffset else Offset(0f, 0f),
+            animationSpec = storiesSetAnimationSpec()
         )
 
         Box(
@@ -106,14 +130,15 @@ fun StoriesSetPlayer(
                 .clip(shape),
             contentAlignment = Alignment.Center
         ) {
-            val roundBobbinSize = remember { 4 }
+            val roundBobbinSize = remember { STORIES_ROUND_BOBBIN_SIZE }
             for (i in -(roundBobbinSize - 1) / 2..roundBobbinSize / 2) {
                 val storySetIndex = remember(focusedIndex) {
                     indexOfStoriesRoundBobbin(focusedIndex, roundBobbinSize, i)
                 }
                 if (storySetIndex >= 0 && storySetIndex <= storySetsList.lastIndex) {
-                    val horizontalOffset =
-                        remember(horizontalDragAmount.value) { (maxSizeDp.width) * (storySetIndex) + horizontalDragAmount.value }
+                    val horizontalOffset = remember(horizontalDragAmount.value) {
+                        (maxSizeDp.width) * (storySetIndex) + horizontalDragAmount.value
+                    }
 
                     //from 0.9f to 1f
                     val fractionOfSize = remember(horizontalDragAmount.value) {
@@ -127,6 +152,7 @@ fun StoriesSetPlayer(
                     StoriesPlayer(cornerRadius = radiusSize,
                         modifier = Modifier
                             .fillMaxSize()
+                            .alpha(alpha)
                             .offset(x = horizontalOffset),
                         storySet = storySetsList[storySetIndex],
                         fractionOfSize = fractionOfSize,
@@ -150,6 +176,19 @@ fun StoriesSetPlayer(
             }
         }
     }
+}
+
+@Composable
+private fun <T> storiesSetAnimationSpec(
+    factor: Float = 1f,
+    reversing: Boolean = false
+): TweenSpec<T> {
+    val delay = if (reversing) (ANIMATION_ENTRY_DURATION * (1f - factor)).toInt() else 0
+    return TweenSpec(
+        (ANIMATION_ENTRY_DURATION * factor).toInt(),
+        easing = FastOutLinearInEasing,
+        delay = delay
+    )
 }
 
 @Composable
@@ -256,3 +295,6 @@ internal const val MAX_RADIUS_FRACTION_IN_HORIZONTAL_TRANSITION = 1f
 internal const val MIN_RADIUS_FRACTION_IN_HORIZONTAL_TRANSITION = 0f
 
 private const val ANIMATION_TIME_HORIZONTAL_SNAP = 400L
+private const val ANIMATION_ENTRY_DURATION = 200L
+
+internal const val STORIES_ROUND_BOBBIN_SIZE = 3

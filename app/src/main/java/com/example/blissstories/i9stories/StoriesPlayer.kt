@@ -44,30 +44,15 @@ fun StoriesPlayer(
     }
 
     val videoMediaItems = remember(storySet) {
-        storySet.stories.filterIsInstance(Story.Video::class.java).map { MediaItem.fromUri(it.video) }
+        storySet.stories.filterIsInstance(Story.Video::class.java)
+            .map { MediaItem.fromUri(it.video) }
     }
-
-    //This val corresponds to the index of the video the exoplayer should be in
-    val mediaItemsIndex = remember(storySet) {
-        var nextIndex = 0
-        var currentIndex = 0
-        storySet.stories.map {
-            currentIndex = nextIndex
-            if (it is Story.Video && currentIndex < videoMediaItems.size - 1) {
-                nextIndex++
-                currentIndex
-            } else {
-                currentIndex
-            }
-        }
-    }
+    val mediaItemsIndex = remember(storySet) { extractMediaItemsIndex(storySet, videoMediaItems) }
 
     var currentStoryIndex by remember { mutableStateOf(0) }
-    val currentStory = remember(currentStoryIndex) {
-        storySet.stories[currentStoryIndex] }
-    val currentVideoIndex = remember(currentStoryIndex, mediaItemsIndex) {
-        mediaItemsIndex[currentStoryIndex]
-    }
+    val currentStory = remember(currentStoryIndex) { storySet.stories[currentStoryIndex] }
+    val currentVideoIndex =
+        remember(currentStoryIndex, mediaItemsIndex) { mediaItemsIndex[currentStoryIndex] }
     var currentStoryProgress by remember { mutableStateOf(0.0f) }
 
     var playerState by remember { mutableStateOf(StoryFrameState.Playing) }
@@ -107,7 +92,7 @@ fun StoriesPlayer(
             }
             TapType.ShortCenter,
             TapType.ShortRight -> {
-                if (currentStoryIndex ==  storySet.stories.lastIndex) {
+                if (currentStoryIndex == storySet.stories.lastIndex) {
                     onFinishedStorySet()
                 } else {
                     currentStoryProgress = 0f
@@ -130,7 +115,6 @@ fun StoriesPlayer(
         }
         val sizeDp = remember(size) { size.toDpSize() }
         val sizePx = remember(sizeDp) { sizeDp.toPx(density) }
-        val proportion = remember(sizeDp) { sizeDp.height / sizeDp.width }
 
         var totalVerticalDragAmount by remember { mutableStateOf(0.dp) }
 
@@ -187,14 +171,12 @@ fun StoriesPlayer(
                 .offset(x = 0.dp, y = topOffset)
                 .scale(fractionOfSize * scale)
                 .clip(RoundedCornerShape(cornerRadius + radius))
-
-
         ) {
             ComposedStoryProgressBar(
                 modifier = Modifier
                     .zIndex(2f)
                     .padding(16.dp),
-                numberOfStories =  storySet.stories.size,
+                numberOfStories = storySet.stories.size,
                 currentStoryIndex = currentStoryIndex,
                 currentStoryProgress = currentStoryProgress,
             )
@@ -222,6 +204,24 @@ fun StoriesPlayer(
                     animateFixedItems = currentStoryIndex == 0
                 )
             }
+        }
+    }
+}
+
+//This val corresponds to the index of the video the exoplayer should be in
+private fun extractMediaItemsIndex(
+    storySet: StorySet,
+    videoMediaItems: List<MediaItem>
+): List<Int> {
+    var nextIndex = 0
+    var currentIndex: Int
+    return storySet.stories.map {
+        currentIndex = nextIndex
+        if (it is Story.Video && currentIndex < videoMediaItems.size - 1) {
+            nextIndex++
+            currentIndex
+        } else {
+            currentIndex
         }
     }
 }

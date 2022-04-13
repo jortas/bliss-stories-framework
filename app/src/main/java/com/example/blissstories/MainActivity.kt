@@ -34,8 +34,11 @@ class MainActivity : AppCompatActivity() {
             listOf(
                 staticStoryFactoryMock(),
                 storyFactoryMock(),
-                //   staticStoryFactoryMock(),
-                //   staticStoryFactoryMock(),
+                staticStoryFactoryMock(),
+                storyFactoryMock(),
+                storyFactoryMock(),
+                staticStoryFactoryMock(),
+                staticStoryFactoryMock(),
                 //   staticStoryFactoryMock(),
                 //   staticStoryFactoryMock()
             )
@@ -49,8 +52,8 @@ class MainActivity : AppCompatActivity() {
 
                 // In Compose world
                 MaterialTheme {
-                    var open by remember {
-                        mutableStateOf(false)
+                    var storyToOpen: Int? by remember {
+                        mutableStateOf(null)
                     }
 
                     val cornerRadius = 4.dp
@@ -66,12 +69,12 @@ class MainActivity : AppCompatActivity() {
                         return {
                             with(density) {
                                 centerOfClickedItem = Offset(
-                                    lazyRowState.layoutInfo.visibleItemsInfo[0].offset.toDp().value -
+                                    lazyRowState.layoutInfo.visibleItemsInfo[index - lazyRowState.firstVisibleItemIndex].offset.toDp().value -
                                             lazyRowState.layoutInfo.viewportStartOffset.toDp().value +
                                             size.width.value / 2,
                                     (size.height.value / 2f) + 16f,
                                 )
-                                open = true
+                                storyToOpen = index
                             }
                         }
                     }
@@ -99,20 +102,14 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    if (open) {
+                    if (storyToOpen != null) {
                         StoriesSetPlayer(
+                            initialStorySetIndex = storyToOpen!!,
                             initialRadius = cornerRadius,
                             initialSize = size,
                             initialPosition = centerOfClickedItem,
-                            storySetsList = listOf(
-                                staticStoryFactoryMock(),
-                                //    storyFactoryMock(),
-                                //   staticStoryFactoryMock(),
-                                //   staticStoryFactoryMock(),
-                                //   staticStoryFactoryMock(),
-                                //   staticStoryFactoryMock()
-                            ),
-                            close = { open = false },
+                            storySetsList = stories,
+                            close = { storyToOpen = null },
                             onFinishedStorySets = {}
                         )
                     }
