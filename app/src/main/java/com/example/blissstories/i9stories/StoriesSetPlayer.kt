@@ -168,9 +168,15 @@ fun StoriesSetPlayer(
                             )(drag)
                         },
                         onHorizontalDragEnd = {
+                            val direction = (savedHorizontalDragAmount.value - horizontalDragAmount.value).value.sign
                             savedHorizontalDragAmount.value = horizontalDragAmount.value
                             snapValue.value =
                                 maxSizeDp.width * (horizontalDragAmount.value / maxSizeDp.width.value).value.roundToInt()
+                            if (snapValue.value!! < horizontalDragAmount.value && direction == 1f) {
+                                focusedIndex += 1
+                            }else if(snapValue.value!! > horizontalDragAmount.value && direction == -1f){
+                                focusedIndex -= 1
+                            }
                         })
                 }
             }

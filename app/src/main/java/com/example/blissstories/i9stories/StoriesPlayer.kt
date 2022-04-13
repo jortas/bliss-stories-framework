@@ -49,7 +49,7 @@ fun StoriesPlayer(
     }
     val mediaItemsIndex = remember(storySet) { extractMediaItemsIndex(storySet, videoMediaItems) }
 
-    var currentStoryIndex by remember { mutableStateOf(0) }
+    var currentStoryIndex by remember(storySet) { mutableStateOf(0) }
     val currentStory = remember(currentStoryIndex) { storySet.stories[currentStoryIndex] }
     val currentVideoIndex =
         remember(currentStoryIndex, mediaItemsIndex) { mediaItemsIndex[currentStoryIndex] }
