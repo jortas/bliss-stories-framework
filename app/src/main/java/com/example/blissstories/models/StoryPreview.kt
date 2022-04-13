@@ -1,6 +1,7 @@
 package com.example.blissstories.models
 
 import android.content.Context
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.example.blissstories.projectutils.colorComposeKey
 import com.example.blissstories.projectutils.colorKey
@@ -15,6 +16,7 @@ data class StoryPreview(
     val background: VisualResource,
     val titleColor: ColorKeyResource
 ) {
+    @Composable
     fun backgroundColor(context: Context): Color {
         val defaultColor = Color.Black
         return if (background is ColorKeyResource) {

@@ -10,13 +10,18 @@ import com.example.blissstories.models.StorySet
 import com.example.blissstories.projectutils.resources.ColorKeyResource
 import com.example.blissstories.projectutils.resources.ImageKeyResource
 
-fun staticStoryFactoryMock(): StorySet {
-    val preview = StoryPreview(
+fun storyPreviewMock(): StoryPreview {
+    return StoryPreview(
         "Title",
         ImageKeyResource(key = "image.jpg"),
         background = ColorKeyResource(key = "AquaGreen"),
         titleColor = ColorKeyResource(key = "White")
     )
+}
+
+
+fun staticStoryFactoryMock(): StorySet {
+    val preview = storyPreviewMock()
 
     val storyList = mutableListOf<Story>()
     val story1 = Story.Static(
@@ -47,7 +52,9 @@ const val VIDEO1 =
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
 
 
-fun storyFactoryMock(): MutableList<Story> {
+fun storyFactoryMock(): StorySet {
+    val preview = storyPreviewMock()
+
     val storyList = mutableListOf<Story>()
     val story0 = Story.Video(
         Uri.parse(VIDEO1),
@@ -80,5 +87,6 @@ fun storyFactoryMock(): MutableList<Story> {
     storyList.add(story2)
     storyList.add(story3)
     storyList.add(story4)
-    return storyList
+
+    return StorySet(preview, storyList)
 }

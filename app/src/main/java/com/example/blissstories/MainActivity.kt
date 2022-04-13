@@ -2,24 +2,26 @@ package com.example.blissstories
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.i9stories.StoriesSetPlayer
+import com.example.blissstories.i9stories.StorySetPreview
 import com.example.blissstories.models.mocks.staticStoryFactoryMock
-import com.example.blissstories.utills.ButtonForStory
+import com.example.blissstories.models.mocks.storyFactoryMock
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,46 +30,91 @@ class MainActivity : AppCompatActivity() {
 
         val composeView = this.findViewById<ComposeView>(R.id.composeView)
 
+        val stories =
+            listOf(
+                staticStoryFactoryMock(),
+                storyFactoryMock(),
+                //   staticStoryFactoryMock(),
+                //   staticStoryFactoryMock(),
+                //   staticStoryFactoryMock(),
+                //   staticStoryFactoryMock()
+            )
+
         composeView.apply {
             // Dispose the Composition when the view's LifecycleOwner
             // is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                val widthButton = 30.dp
-                val heightButton = 60.dp
+                val density = LocalDensity.current
+
                 // In Compose world
                 MaterialTheme {
                     var open by remember {
                         mutableStateOf(false)
                     }
 
+                    val cornerRadius = 4.dp
+                    val size = DpSize(136.dp, 160.dp)
+                    var centerOfClickedItem by remember {
+                        mutableStateOf(Offset(0f, 0f))
+                    }
+
+                    val lazyRowState = rememberLazyListState()
+
+                    @Composable
+                    fun clickOnStoryPreview(index: Int): () -> Unit {
+                        return {
+                            with(density) {
+                                centerOfClickedItem = Offset(
+                                    lazyRowState.layoutInfo.visibleItemsInfo[0].offset.toDp().value -
+                                            lazyRowState.layoutInfo.viewportStartOffset.toDp().value +
+                                            size.width.value / 2,
+                                    (size.height.value / 2f) + 16f,
+                                )
+                                open = true
+                            }
+                        }
+                    }
+
                     BoxWithConstraints(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.TopCenter
                     ) {
-                        val shape = RoundedCornerShape(4.dp)
 
-                        ButtonForStory(
-                            shape = shape,
-                            modifier = Modifier.size(widthButton, heightButton),
-                            onClick = { open = true }
-                        )
-                        if (open) {
-                            StoriesSetPlayer(
-                                initialShape = shape,
-                                initialSize = DpSize(widthButton, heightButton),
-                                storySetsList = listOf(
-                                    staticStoryFactoryMock(),
-                                //    storyFactoryMock(),
-                                    //   staticStoryFactoryMock(),
-                                    //   staticStoryFactoryMock(),
-                                    //   staticStoryFactoryMock(),
-                                    //   staticStoryFactoryMock()
-                                ),
-                                close = { open = false },
-                                onFinishedStorySets = {}
-                            )
+                        LazyRow(
+                            Modifier.fillMaxWidth(),
+                            state = lazyRowState,
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            itemsIndexed(stories) { index, storySet ->
+                                StorySetPreview(
+                                    modifier = Modifier
+                                        .padding(end = 16.dp)
+                                        .size(size)
+                                        .clip(RoundedCornerShape(cornerRadius)),
+                                    storyPreview = storySet.preview,
+                                    onClick = clickOnStoryPreview(index)
+                                )
+                            }
                         }
+                    }
+
+                    if (open) {
+                        StoriesSetPlayer(
+                            initialRadius = cornerRadius,
+                            initialSize = size,
+                            initialPosition = centerOfClickedItem,
+                            storySetsList = listOf(
+                                staticStoryFactoryMock(),
+                                //    storyFactoryMock(),
+                                //   staticStoryFactoryMock(),
+                                //   staticStoryFactoryMock(),
+                                //   staticStoryFactoryMock(),
+                                //   staticStoryFactoryMock()
+                            ),
+                            close = { open = false },
+                            onFinishedStorySets = {}
+                        )
                     }
                 }
             }

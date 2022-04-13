@@ -1,7 +1,6 @@
 package com.example.blissstories.i9stories
 
-import android.util.Log
-import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -28,14 +27,15 @@ import kotlin.math.sign
 @Composable
 fun StoriesSetPlayer(
     modifier: Modifier = Modifier,
-    initialShape: Shape = RoundedCornerShape(4.dp),
+    initialRadius: Dp = 4.dp,
     initialSize: DpSize = DpSize(1.dp, 1.dp),
+    initialPosition: Offset = Offset(0f, 0f),
     animateEntry: Boolean = true,
     storySetsList: List<StorySet>,
     close: () -> Unit,
     onFinishedStorySets: () -> Unit = {},
 ) {
-    val shape = RoundedCornerShape(0.dp)
+
     val horizontalDragAmount = remember { mutableStateOf(0.dp) }
     val snapValue: MutableState<Dp?> = remember { mutableStateOf(null) }
     val savedHorizontalDragAmount = remember { mutableStateOf(0.dp) }
@@ -69,21 +69,41 @@ fun StoriesSetPlayer(
             maxSizeDp.width.value - maxSizeDp.width.value / GOLD_RATIO
         }
 
+        val initialOffset = remember(initialPosition) {
+            Offset(initialPosition.x - maxWidth.value/2, initialPosition.y - maxHeight.value/2)
+        }
+
         val size by animateDpSizeAsState(
             targetValue = if (justLaunched && animateEntry || closeEvent) initialSize else {
                 maxSizeDp
-            }, finishedListener = { size ->
+            },
+            animationSpec = AnimationSpec
+            , finishedListener = { size ->
                 if (closeEvent) {
                     close()
                     closeEvent = false
                 }
             })
 
+        val radius by animateDpAsState(
+            targetValue = if (justLaunched && animateEntry || closeEvent) initialRadius else {
+                0.dp
+            }
+        )
+
+        val shape = remember(radius) { RoundedCornerShape(radius) }
+
+        val offset by animateOffsetAsState(
+            targetValue = if (justLaunched && animateEntry || closeEvent) initialOffset else {
+                Offset(0f, 0f)
+            }
+        )
+
         Box(
             Modifier
+                .offset(offset.x.dp, offset.y.dp)
                 .scale(size.width.value / maxWidth.value, size.height.value / maxHeight.value)
-                .clip(shape)
-            ,
+                .clip(shape),
             contentAlignment = Alignment.Center
         ) {
             val roundBobbinSize = remember { 4 }

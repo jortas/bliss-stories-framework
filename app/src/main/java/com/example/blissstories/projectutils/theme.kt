@@ -26,7 +26,8 @@ object AppFontFamilies {
 @Immutable
 data class Typography(
     val headingMedium: TextStyle,
-    val captionLarge: TextStyle
+    val captionLarge: TextStyle,
+    val caption: TextStyle
 )
 
 fun typography(): Typography {
@@ -49,6 +50,10 @@ fun typography(): Typography {
         captionLarge = baseTextStyle.copy(
             fontSize = 14.sp
         ),
+        caption = baseTextStyle.copy(
+            fontWeight = FontWeight.Medium,
+            fontSize = 12.sp
+        )
     )
 }
 
