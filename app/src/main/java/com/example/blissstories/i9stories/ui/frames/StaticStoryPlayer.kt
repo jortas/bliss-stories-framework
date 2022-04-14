@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories.frames
+package com.example.blissstories.i9stories.ui.frames
 
 import androidx.annotation.IntRange
 import androidx.compose.animation.animateColorAsState
@@ -22,8 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.R
 import com.example.blissstories.projectutils.ThemeButtonColors
-import com.example.blissstories.i9stories.StoryFrameState
-import com.example.blissstories.i9stories.isPlaying
+import com.example.blissstories.i9stories.ui.StoryFrameState
+import com.example.blissstories.i9stories.ui.isPlaying
 import com.example.blissstories.models.Story
 import com.example.blissstories.projectutils.rememberTypography
 import org.threeten.bp.LocalDateTime

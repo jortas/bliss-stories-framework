@@ -1,9 +1,7 @@
-package com.example.blissstories.i9stories.components
+package com.example.blissstories.i9stories.ui.components
 
-import android.inputmethodservice.Keyboard
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
-import androidx.annotation.LongDef
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable

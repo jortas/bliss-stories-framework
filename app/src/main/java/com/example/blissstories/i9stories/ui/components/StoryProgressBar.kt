@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories.components
+package com.example.blissstories.i9stories.ui.components
 
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.background

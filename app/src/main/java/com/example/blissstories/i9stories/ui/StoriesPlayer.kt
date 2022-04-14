@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,23 +13,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.zIndex
-import com.example.blissstories.i9stories.components.ComposedStoryProgressBar
-import com.example.blissstories.i9stories.frames.StaticStoryPlayer
-import com.example.blissstories.i9stories.frames.VideoStoryFrame
-import com.example.blissstories.i9stories.utils.ExoPlayerCreator
+import com.example.blissstories.i9stories.ui.components.ComposedStoryProgressBar
+import com.example.blissstories.i9stories.ui.frames.StaticStoryPlayer
+import com.example.blissstories.i9stories.ui.frames.VideoStoryFrame
+import com.example.blissstories.i9stories.ui.models.StorySetUiState
 import com.example.blissstories.models.Story
-import com.example.blissstories.models.StorySet
 import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
-import com.google.android.exoplayer2.MediaItem
 
 @Composable
 fun StoriesPlayer(
     modifier: Modifier,
     cornerRadius: Dp,
     fractionOfSize: Float,
-    storySet: StorySet?,
+    viewModel: StorySetPlayerViewModel,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
     onHorizontalDragEnd: () -> Unit,
@@ -38,41 +36,31 @@ fun StoriesPlayer(
     ) {
     val context = LocalContext.current
     val density = LocalDensity.current
+    val storySet = viewModel.state
 
     if (storySet == null) {
         return
     }
 
-    val videoMediaItems = remember(storySet) {
-        storySet.stories.filterIsInstance(Story.Video::class.java)
-            .map { MediaItem.fromUri(it.video) }
+    val playerState = remember(storySet.playing) {
+        if (storySet.playing) {
+            StoryFrameState.Playing
+        } else {
+            StoryFrameState.Paused
+        }
     }
-    val mediaItemsIndex = remember(storySet) { extractMediaItemsIndex(storySet, videoMediaItems) }
-
-    var currentStoryIndex by remember(storySet) { mutableStateOf(0) }
-    val currentStory = remember(currentStoryIndex) { storySet.stories[currentStoryIndex] }
-    val currentVideoIndex =
-        remember(currentStoryIndex, mediaItemsIndex) { mediaItemsIndex[currentStoryIndex] }
-    var currentStoryProgress by remember { mutableStateOf(0.0f) }
-
-    var playerState by remember { mutableStateOf(StoryFrameState.Playing) }
 
     val exoPlayer = remember {
         val exoPlayer = ExoPlayerCreator.createExoPlayer(
             context,
-            videoMediaItems,
-            onStateChange = { newState -> playerState = newState },
-            onVideoChange = {
-                currentStoryIndex = it
-                currentStoryProgress = 0f
-            }
+            storySet.videoMediaItems,
+            onPlayingChange = {
+                viewModel.setPlaying(it)
+            },
+            onVideoChange = {viewModel.setCurrentStoryIndex(it) }
         )
         exoPlayer.pauseAtEndOfMediaItems = true
         exoPlayer
-    }
-
-    LaunchedEffect(currentStoryIndex) {
-        playerState = StoryFrameState.Playing
     }
 
     fun onPress(tapEvent: Offset, width: Float) {
@@ -83,20 +71,18 @@ fun StoriesPlayer(
 
         when (tapType) {
             TapType.ShortLeft -> {
-                if (currentStoryIndex == 0) {
+                if (storySet.isInFirstStory()) {
                     close()
                 } else {
-                    currentStoryProgress = 0f
-                    currentStoryIndex -= 1
+                    viewModel.goToPreviousStory()
                 }
             }
             TapType.ShortCenter,
             TapType.ShortRight -> {
-                if (currentStoryIndex == storySet.stories.lastIndex) {
+                if (storySet!!.isInLastStory()) {
                     onFinishedStorySet()
                 } else {
-                    currentStoryProgress = 0f
-                    currentStoryIndex += 1
+                    viewModel.goToNextStory()
                 }
             }
             TapType.None,
@@ -144,11 +130,11 @@ fun StoriesPlayer(
                 .addMultipleGestures(
                     density,
                     onGestureStart = {
-                        playerState = StoryFrameState.Paused
+                        storySet!!.playing = false
                         totalVerticalDragAmount = 0.dp
                     },
                     onGestureEnd = {
-                        playerState = StoryFrameState.Playing
+                        storySet!!.playing = true
                     },
                     onPress = { onPress(it, sizePx.width) },
                     onVerticalDrag = { totalVerticalDragAmount = max(0.dp, it) },
@@ -172,59 +158,53 @@ fun StoriesPlayer(
                 .scale(fractionOfSize * scale)
                 .clip(RoundedCornerShape(cornerRadius + radius))
         ) {
+            val progress = remember(storySet, storySet.currentProgress) {
+                storySet.currentProgress
+            }
+
             ComposedStoryProgressBar(
                 modifier = Modifier
                     .zIndex(2f)
                     .padding(16.dp),
                 numberOfStories = storySet.stories.size,
-                currentStoryIndex = currentStoryIndex,
-                currentStoryProgress = currentStoryProgress,
+                currentStoryIndex = storySet.currentStoryIndex,
+                currentStoryProgress = progress,
             )
 
-            when (currentStory) {
+            when (storySet.currentStory) {
                 is Story.Video -> VideoStoryFrame(
                     modifier = Modifier
                         .size(sizeDp)
                         .zIndex(1f),
                     exoPlayer = exoPlayer,
                     playerState = playerState,
-                    currentVideoIndex = currentVideoIndex,
-                    onStoryProgressChange = {
-                        currentStoryProgress = it
-                    },
-                    onStoryFinished = { currentStoryIndex++ },
+                    currentVideoIndex = storySet.currentVideoIndex,
+                    onStoryProgressChange = { viewModel.setProgress(it) },
+                    onStoryFinished = onStoryFinished(viewModel, onFinishedStorySet),
                 )
                 is Story.Static -> StaticStoryPlayer(
-                    story = currentStory,
+                    story = storySet!!.currentStaticStory,
                     playerState = playerState,
-                    onStoryProgressChange = {
-                        currentStoryProgress = it
-                    },
-                    onStoryFinished = { currentStoryIndex++ },
-                    animateFixedItems = currentStoryIndex == 0
+                    onStoryProgressChange = { viewModel.setProgress(it)  },
+                    onStoryFinished = onStoryFinished(viewModel, onFinishedStorySet),
+                    animateFixedItems = storySet.isInFirstStory()
                 )
             }
         }
     }
 }
 
-//This val corresponds to the index of the video the exoplayer should be in
-private fun extractMediaItemsIndex(
-    storySet: StorySet,
-    videoMediaItems: List<MediaItem>
-): List<Int> {
-    var nextIndex = 0
-    var currentIndex: Int
-    return storySet.stories.map {
-        currentIndex = nextIndex
-        if (it is Story.Video && currentIndex < videoMediaItems.size - 1) {
-            nextIndex++
-            currentIndex
-        } else {
-            currentIndex
-        }
+private fun onStoryFinished(
+    viewModel: StorySetPlayerViewModel,
+    onFinishedstorySet: () -> Unit
+): () -> Unit = {
+    if (viewModel.state.isInLastStory()) {
+        onFinishedstorySet()
+    } else {
+        viewModel.goToNextStory()
     }
 }
+
 
 enum class StoryFrameState() {
     Playing, Paused, Unknown

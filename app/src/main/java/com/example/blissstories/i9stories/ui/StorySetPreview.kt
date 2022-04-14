@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.ui
 
 import androidx.annotation.IntRange
 import androidx.compose.animation.animateColorAsState
@@ -7,18 +7,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -26,13 +19,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import com.example.blissstories.R
-import com.example.blissstories.models.Story
 import com.example.blissstories.models.StoryPreview
 import com.example.blissstories.models.mocks.storyPreviewMock
-import com.example.blissstories.projectutils.ThemeButtonColors
-import com.example.blissstories.projectutils.colorComposeKey
 import com.example.blissstories.projectutils.rememberTypography
-import com.example.blissstories.projectutils.resourceProvider
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.temporal.ChronoUnit
 

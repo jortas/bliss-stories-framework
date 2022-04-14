@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories
+package com.example.blissstories.i9stories.ui
 
 import androidx.compose.foundation.gestures.*
 import androidx.compose.ui.Modifier

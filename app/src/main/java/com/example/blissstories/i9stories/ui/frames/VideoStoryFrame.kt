@@ -1,4 +1,4 @@
-package com.example.blissstories.i9stories.frames
+package com.example.blissstories.i9stories.ui.frames
 
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -6,8 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.blissstories.i9stories.StoryFrameState
-import com.example.blissstories.i9stories.utils.currentProgress
+import com.example.blissstories.i9stories.ui.StoryFrameState
+import com.example.blissstories.i9stories.ui.currentProgress
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView

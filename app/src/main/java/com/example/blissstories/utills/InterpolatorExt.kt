@@ -1,8 +1,8 @@
 package com.example.blissstories.utills
 
 import androidx.compose.ui.unit.Dp
-import com.example.blissstories.i9stories.abs
-import com.example.blissstories.i9stories.rem
+import com.example.blissstories.i9stories.ui.abs
+import com.example.blissstories.i9stories.ui.rem
 import kotlin.math.sign
 import kotlin.math.tanh
 

@@ -1,7 +1,6 @@
-package com.example.blissstories.i9stories.utils
+package com.example.blissstories.i9stories.ui
 
 import android.content.Context
-import com.example.blissstories.i9stories.StoryFrameState
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -10,7 +9,7 @@ internal object ExoPlayerCreator {
     fun createExoPlayer(
         context: Context,
         mediaItem: List<MediaItem>,
-        onStateChange: (StoryFrameState) -> Unit = {},
+        onPlayingChange: (Boolean) -> Unit = {},
         onVideoChange: (Int) -> Unit,
     ): ExoPlayer {
         return ExoPlayer.Builder(context).build().apply {
@@ -25,9 +24,9 @@ internal object ExoPlayerCreator {
                         super.onEvents(player, events)
                         if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) {
                             if (player.isPlaying) {
-                                onStateChange(StoryFrameState.Playing)
+                                onPlayingChange(true)
                             } else {
-                                onStateChange(StoryFrameState.Paused)
+                                onPlayingChange(false)
                             }
                         }
                     }

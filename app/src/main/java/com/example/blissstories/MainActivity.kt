@@ -18,8 +18,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.example.blissstories.i9stories.StoriesSetPlayer
-import com.example.blissstories.i9stories.StorySetPreview
+import com.example.blissstories.i9stories.ui.StorySetsPlayer
+import com.example.blissstories.i9stories.ui.StorySetPreview
+import com.example.blissstories.i9stories.ui.StorySetsPlayerViewModel
+import com.example.blissstories.i9stories.ui.models.StorySetUiState
 import com.example.blissstories.models.mocks.staticStoryFactoryMock
 import com.example.blissstories.models.mocks.storyFactoryMock
 
@@ -41,7 +43,7 @@ class MainActivity : AppCompatActivity() {
                 staticStoryFactoryMock(),
                 //   staticStoryFactoryMock(),
                 //   staticStoryFactoryMock()
-            )
+            ).map { StorySetUiState(it) }
 
         composeView.apply {
             // Dispose the Composition when the view's LifecycleOwner
@@ -52,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
                 // In Compose world
                 MaterialTheme {
-                    var storyToOpen: Int? by remember {
+                    var storySetToOpen: Int? by remember {
                         mutableStateOf(null)
                     }
 
@@ -74,7 +76,7 @@ class MainActivity : AppCompatActivity() {
                                             size.width.value / 2,
                                     (size.height.value / 2f) + 16f,
                                 )
-                                storyToOpen = index
+                                storySetToOpen = index
                             }
                         }
                     }
@@ -102,14 +104,13 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    if (storyToOpen != null) {
-                        StoriesSetPlayer(
-                            initialStorySetIndex = storyToOpen!!,
+                    if (storySetToOpen != null) {
+                        StorySetsPlayer(
                             initialRadius = cornerRadius,
                             initialSize = size,
                             initialPosition = centerOfClickedItem,
-                            storySetsList = stories,
-                            close = { storyToOpen = null },
+                            viewModel = StorySetsPlayerViewModel(stories, storySetToOpen!!),
+                            close = { storySetToOpen = null },
                             onFinishedStorySets = {}
                         )
                     }
