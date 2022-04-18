@@ -16,24 +16,23 @@ import com.google.android.exoplayer2.ui.PlayerView
 fun VideoStoryFrame(
     modifier: Modifier = Modifier,
     exoPlayer: ExoPlayer,
-    playerState: StoryFrameState,
     currentVideoIndex: Int,
-    onStateChange: (StoryFrameState) -> Unit = {},
+    playing: Boolean,
+    onPlayingStateChange: (Boolean) -> Unit = {},
     onStoryProgressChange: (Float) -> Unit = {},
     onStoryFinished: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val progress = exoPlayer.currentProgress()
 
-    LaunchedEffect(playerState) {
-        exoPlayer.playWhenReady = playerState == StoryFrameState.Playing
+    LaunchedEffect(playing) {
+        exoPlayer.playWhenReady = playing
     }
 
     LaunchedEffect(currentVideoIndex) {
         if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
             exoPlayer.seekTo(currentVideoIndex, 0L)
         }
-        onStateChange(StoryFrameState.Playing)
     }
 
     LaunchedEffect(key1 = "init", block = {
@@ -43,7 +42,7 @@ fun VideoStoryFrame(
                 if (reason == ExoPlayer.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {
                     onStoryFinished()
                 } else {
-                    onStateChange(if (playWhenReady) StoryFrameState.Playing else StoryFrameState.Paused)
+                    onPlayingStateChange(playWhenReady)
 
                 }
             }

@@ -52,12 +52,19 @@ const val VIDEO1 =
     "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
 
 
+const val VIDEO2 =
+    "https://player.vimeo.com/external/699535161.m3u8?s=7b4def605d92599f2353a08fc5b021bb3c2c642d"
+
+//preview
+const val VIDEO3 =
+    "https://player.vimeo.com/external/699537879.m3u8?s=181c0f6abc3cdc16788469c9332030374150d502"
+
 fun storyFactoryMock(): StorySet {
     val preview = storyPreviewMock()
 
     val storyList = mutableListOf<Story>()
     val story0 = Story.Video(
-        Uri.parse(VIDEO1),
+        Uri.parse(VIDEO2),
         order = 0,
     )
     val story1 = Story.Static(

@@ -13,7 +13,7 @@ class StorySetPlayerViewModel(storySetUiState: StorySetUiState) : ViewModel() {
 
     var state: StorySetUiState by mutableStateOf(storySetUiState, policy = neverEqualPolicy())
 
-    fun setCurrentStoryIndex(newCurrentStoryIndex:Int) {
+    fun setCurrentStoryIndex(newCurrentStoryIndex: Int) {
         state.currentStoryIndex = newCurrentStoryIndex
         state.resetProgress()
         state = state

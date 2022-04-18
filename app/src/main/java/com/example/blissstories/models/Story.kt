@@ -7,7 +7,13 @@ sealed class Story() {
     abstract val order: Int
 
 
-    data class Video(val video: Uri, override val order: Int) : Story()
+    data class Video(val video: Uri, override val order: Int) : Story() {
+        companion object {
+            fun buildFromM3u8(m3u8Link: Uri) {
+                return
+            }
+        }
+    }
 
     data class Static(
         val color: Color,

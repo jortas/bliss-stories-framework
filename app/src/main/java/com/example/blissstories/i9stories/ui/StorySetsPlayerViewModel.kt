@@ -23,6 +23,10 @@ class StorySetsPlayerViewModel(
         viewModels[currentStorySetIndex].setPlaying(true)
     }
 
+    init {
+        updateCurrentStorySetIndex(initialStorySetIndex)
+    }
+
     val currentStoryViewModel
         get() = viewModels[currentStorySetIndex]
 

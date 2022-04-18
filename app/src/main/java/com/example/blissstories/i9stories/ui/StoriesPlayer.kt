@@ -177,7 +177,7 @@ fun StoriesPlayer(
                         .size(sizeDp)
                         .zIndex(1f),
                     exoPlayer = exoPlayer,
-                    playerState = playerState,
+                    playing = storySet.playing,
                     currentVideoIndex = storySet.currentVideoIndex,
                     onStoryProgressChange = { viewModel.setProgress(it) },
                     onStoryFinished = onStoryFinished(viewModel, onFinishedStorySet),
