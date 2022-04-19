@@ -17,9 +17,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StoryProgressBar(
     modifier: Modifier,
-    @FloatRange(from = 0.0, to = 1.0) progress: Float,
-    totalTime: Long = 0L,
-    isPlaying: Boolean = false
+    @FloatRange(from = 0.0, to = 1.0) progress: Float
 ) {
 
     val shape = RoundedCornerShape(8.dp)

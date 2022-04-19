@@ -11,22 +11,20 @@ import com.example.blissstories.i9stories.ui.currentProgress
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
+import kotlinx.coroutines.delay
 
 @Composable
 fun VideoStoryFrame(
     modifier: Modifier = Modifier,
     exoPlayer: ExoPlayer,
     currentVideoIndex: Int,
-    playing: Boolean,
     onPlayingStateChange: (Boolean) -> Unit = {},
     onStoryProgressChange: (Float) -> Unit = {},
     onStoryFinished: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val progress = exoPlayer.currentProgress()
-
-    LaunchedEffect(playing) {
-        exoPlayer.playWhenReady = playing
+    var progress by remember(currentVideoIndex) {
+        mutableStateOf(0f)
     }
 
     LaunchedEffect(currentVideoIndex) {
@@ -49,10 +47,22 @@ fun VideoStoryFrame(
         })
     })
 
-    LaunchedEffect(progress){
-        onStoryProgressChange(progress)
+    LaunchedEffect(currentVideoIndex) {
+        if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
+            exoPlayer.seekTo(currentVideoIndex, 0L)
+        }
     }
 
+    LaunchedEffect(progress) {
+        onStoryProgressChange(exoPlayer.currentProgress())
+    }
+
+    LaunchedEffect("initial") {
+        while(true) {
+            delay(10)
+            progress = exoPlayer.currentProgress()
+        }
+    }
     // player view
     DisposableEffect(
         AndroidView(

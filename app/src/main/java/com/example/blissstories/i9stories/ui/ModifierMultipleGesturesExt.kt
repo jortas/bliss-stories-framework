@@ -1,6 +1,7 @@
 package com.example.blissstories.i9stories.ui
 
 import androidx.compose.foundation.gestures.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerInputChange

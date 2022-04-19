@@ -86,7 +86,8 @@ fun StorySetsPlayer(
                 maxHeight
             )
         }
-        val horizontalDragAmount = remember(viewModel) { mutableStateOf(-maxSizeDp.width * focusedStoryIndex) }
+        val horizontalDragAmount =
+            remember(viewModel) { mutableStateOf(-maxSizeDp.width * focusedStoryIndex) }
 
         val snapValue: MutableState<Dp?> = remember { mutableStateOf(null) }
         val savedHorizontalDragAmount =
@@ -129,11 +130,12 @@ fun StorySetsPlayer(
             contentAlignment = Alignment.Center
         ) {
             val roundBobbinSize = remember { STORIES_ROUND_BOBBIN_SIZE }
+
             for (i in -(roundBobbinSize - 1) / 2..roundBobbinSize / 2) {
                 val storySetIndex = remember(focusedStoryIndex) {
                     indexOfStoriesRoundBobbin(focusedStoryIndex, roundBobbinSize, i)
                 }
-                if (storySetIndex >= 0 && storySetIndex <= viewModel.viewModels.lastIndex) {
+                if (storySetIndex >= 0 && storySetIndex <= viewModel.storySetsStateList.lastIndex) {
                     val horizontalOffset = remember(horizontalDragAmount.value) {
                         (maxSizeDp.width) * (storySetIndex) + horizontalDragAmount.value
                     }
@@ -153,14 +155,18 @@ fun StorySetsPlayer(
                             .fillMaxSize()
                             .alpha(alpha)
                             .offset(x = horizontalOffset),
-                        viewModel = viewModel.currentStoryViewModel,
+
                         fractionOfSize = fractionOfSize,
+                        storySet = viewModel.storySetsStateList[storySetIndex],
                         close = { closeEvent = true },
+                        initialPlayingState = focusedStoryIndex == storySetIndex,
+                        initialCurrentStoryIndex = viewModel.storySetsStateList[storySetIndex].currentStoryIndex,
+                        updateCurrentStoryIndex = {viewModel.storySetsStateList[storySetIndex].currentStoryIndex = it},
                         onFinishedStorySet = { viewModel.goToNextStorySet() },
                         onHorizontalDrag = { drag ->
                             onHorizontalDrag(
                                 focusedStoryIndex,
-                                viewModel.viewModels.lastIndex,
+                                viewModel.storySetsStateList.lastIndex,
                                 limitDragOnNull,
                                 horizontalDragAmount,
                                 savedHorizontalDragAmount.value
@@ -177,7 +183,8 @@ fun StorySetsPlayer(
                             } else if (snapValue.value!! > horizontalDragAmount.value && direction == -1f) {
                                 viewModel.goToPreviousStorySet()
                             }
-                        })
+                        }
+                    )
                 }
             }
         }
@@ -206,7 +213,11 @@ private fun SnapOnDrag(
 ) {
     var endAnimationTime by remember { mutableStateOf(LocalDateTime.now()) }
 
-    LaunchedEffect(snapValue.value, horizontalDragAmount.value, animatingHorizontalDrag.value) {
+    LaunchedEffect(
+        snapValue.value,
+        horizontalDragAmount.value,
+        animatingHorizontalDrag.value
+    ) {
         val now = LocalDateTime.now()
         if (snapValue.value == null) {
             return@LaunchedEffect

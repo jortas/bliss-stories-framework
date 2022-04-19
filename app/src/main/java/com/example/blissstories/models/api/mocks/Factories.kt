@@ -1,17 +1,18 @@
-package com.example.blissstories.models.mocks
+package com.example.blissstories.models.api.mocks
 
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
 import com.example.blissstories.projectutils.AquaGreen
-import com.example.blissstories.R
-import com.example.blissstories.models.Story
-import com.example.blissstories.models.StoryPreview
-import com.example.blissstories.models.StorySet
+import com.example.blissstories.models.api.StoryDto
+import com.example.blissstories.models.api.StoryPreviewDto
+import com.example.blissstories.models.api.StorySetDto
+import com.example.blissstories.models.domain.StorySet
+import com.example.blissstories.models.mappers.toDomain
 import com.example.blissstories.projectutils.resources.ColorKeyResource
 import com.example.blissstories.projectutils.resources.ImageKeyResource
 
-fun storyPreviewMock(): StoryPreview {
-    return StoryPreview(
+fun storyPreviewMock(): StoryPreviewDto {
+    return StoryPreviewDto(
         "This Title has 36 characters. Title.",
         ImageKeyResource(key = "image.jpg"),
         background = ColorKeyResource(key = "AquaGreen"),
@@ -19,33 +20,32 @@ fun storyPreviewMock(): StoryPreview {
     )
 }
 
-
 fun staticStoryFactoryMock(): StorySet {
     val preview = storyPreviewMock()
 
-    val storyList = mutableListOf<Story>()
-    val story1 = Story.Static(
+    val storyList = mutableListOf<StoryDto>()
+    val story1 = StoryDto.Static(
         color = Color.AquaGreen(),
-        duration = Story.Static.Duration.Short,
+        duration = StoryDto.Static.Duration.Short,
         order = 1,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
-    val story2 = Story.Static(
+    val story2 = StoryDto.Static(
         color = Color.AquaGreen(),
-        duration = Story.Static.Duration.Long,
+        duration = StoryDto.Static.Duration.Long,
         order = 2,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
-    val story4 = Story.Static(
+    val story4 = StoryDto.Static(
         color = Color.Gray,
-        duration = Story.Static.Duration.Short,
+        duration = StoryDto.Static.Duration.Short,
         order = 2,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
     storyList.add(story1)
     storyList.add(story2)
     storyList.add(story4)
-    return StorySet(preview, storyList)
+    return StorySetDto(preview, storyList).toDomain()
 }
 
 const val VIDEO1 =
@@ -62,30 +62,30 @@ const val VIDEO3 =
 fun storyFactoryMock(): StorySet {
     val preview = storyPreviewMock()
 
-    val storyList = mutableListOf<Story>()
-    val story0 = Story.Video(
+    val storyList = mutableListOf<StoryDto>()
+    val story0 = StoryDto.Video(
         Uri.parse(VIDEO2),
         order = 0,
     )
-    val story1 = Story.Static(
+    val story1 = StoryDto.Static(
         color = Color.Blue,
-        duration = Story.Static.Duration.Short,
+        duration = StoryDto.Static.Duration.Short,
         order = 1,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
-    val story2 = Story.Static(
+    val story2 = StoryDto.Static(
         color = Color.Yellow,
-        duration = Story.Static.Duration.Short,
+        duration = StoryDto.Static.Duration.Short,
         order = 2,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
-    val story3 = Story.Video(
+    val story3 = StoryDto.Video(
         Uri.parse(VIDEO1),
         order = 3
     )
-    val story4 = Story.Static(
+    val story4 = StoryDto.Static(
         color = Color.Gray,
-        duration = Story.Static.Duration.Short,
+        duration = StoryDto.Static.Duration.Short,
         order = 2,
         title = "Title Title Title Title Title Title Title Title Title Title Title "
     )
@@ -95,5 +95,5 @@ fun storyFactoryMock(): StorySet {
     storyList.add(story3)
     storyList.add(story4)
 
-    return StorySet(preview, storyList)
+    return StorySetDto(preview, storyList).toDomain()
 }

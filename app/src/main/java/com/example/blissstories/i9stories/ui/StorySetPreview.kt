@@ -19,8 +19,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import com.example.blissstories.R
-import com.example.blissstories.models.StoryPreview
-import com.example.blissstories.models.mocks.storyPreviewMock
+import com.example.blissstories.models.api.StoryPreviewDto
+import com.example.blissstories.models.api.mocks.storyPreviewMock
+import com.example.blissstories.models.domain.StoryPreview
+import com.example.blissstories.models.mappers.toDomain
 import com.example.blissstories.projectutils.rememberTypography
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.temporal.ChronoUnit
@@ -121,7 +123,7 @@ private fun storyAnimate(
 private fun StorySetPreviewPreview() {
     StorySetPreview(
         modifier = Modifier.size(136.dp, 160.dp),
-        storyPreview = storyPreviewMock(),
+        storyPreview = storyPreviewMock().toDomain(),
         onClick = {}
     )
 }

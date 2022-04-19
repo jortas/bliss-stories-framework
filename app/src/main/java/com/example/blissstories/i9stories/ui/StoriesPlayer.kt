@@ -1,5 +1,6 @@
 package com.example.blissstories.i9stories.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -16,8 +17,8 @@ import androidx.compose.ui.zIndex
 import com.example.blissstories.i9stories.ui.components.ComposedStoryProgressBar
 import com.example.blissstories.i9stories.ui.frames.StaticStoryPlayer
 import com.example.blissstories.i9stories.ui.frames.VideoStoryFrame
-import com.example.blissstories.i9stories.ui.models.StorySetUiState
-import com.example.blissstories.models.Story
+import com.example.blissstories.models.domain.Story
+import com.example.blissstories.models.domain.StorySet
 import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
@@ -27,7 +28,10 @@ fun StoriesPlayer(
     modifier: Modifier,
     cornerRadius: Dp,
     fractionOfSize: Float,
-    viewModel: StorySetPlayerViewModel,
+    storySet: StorySet,
+    initialPlayingState: Boolean,
+    initialCurrentStoryIndex: Int,
+    updateCurrentStoryIndex: (Int) -> Unit,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
     onHorizontalDragEnd: () -> Unit,
@@ -36,31 +40,45 @@ fun StoriesPlayer(
     ) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    val storySet = viewModel.state
+    var currentStoryIndex by remember(initialCurrentStoryIndex) {
+        mutableStateOf(initialCurrentStoryIndex)
+    }
+    var progress by remember(currentStoryIndex) {
+        mutableStateOf(0f)
+    }
+    var playing by remember(initialPlayingState) {
+        mutableStateOf(initialPlayingState)
+    }
 
     if (storySet == null) {
         return
     }
 
-    val playerState = remember(storySet.playing) {
-        if (storySet.playing) {
+    val playerState = remember(playing) {
+        if (playing) {
             StoryFrameState.Playing
         } else {
             StoryFrameState.Paused
         }
     }
 
+
     val exoPlayer = remember {
         val exoPlayer = ExoPlayerCreator.createExoPlayer(
             context,
             storySet.videoMediaItems,
             onPlayingChange = {
-                viewModel.setPlaying(it)
+                if (storySet.currentStory is Story.Video) {
+                    playing = it
+                }
             },
-            onVideoChange = {viewModel.setCurrentStoryIndex(it) }
+            onVideoChange = { updateCurrentStoryIndex(it) }
         )
         exoPlayer.pauseAtEndOfMediaItems = true
         exoPlayer
+    }
+    LaunchedEffect(playing) {
+        exoPlayer.playWhenReady = playing
     }
 
     fun onPress(tapEvent: Offset, width: Float) {
@@ -74,15 +92,17 @@ fun StoriesPlayer(
                 if (storySet.isInFirstStory()) {
                     close()
                 } else {
-                    viewModel.goToPreviousStory()
+                    currentStoryIndex--
+                    updateCurrentStoryIndex(currentStoryIndex)
                 }
             }
             TapType.ShortCenter,
             TapType.ShortRight -> {
-                if (storySet!!.isInLastStory()) {
+                if (storySet.isInLastStory()) {
                     onFinishedStorySet()
                 } else {
-                    viewModel.goToNextStory()
+                    currentStoryIndex++
+                    updateCurrentStoryIndex(currentStoryIndex)
                 }
             }
             TapType.None,
@@ -130,11 +150,11 @@ fun StoriesPlayer(
                 .addMultipleGestures(
                     density,
                     onGestureStart = {
-                        storySet!!.playing = false
+                        playing = false
                         totalVerticalDragAmount = 0.dp
                     },
                     onGestureEnd = {
-                        storySet!!.playing = true
+                        playing = true
                     },
                     onPress = { onPress(it, sizePx.width) },
                     onVerticalDrag = { totalVerticalDragAmount = max(0.dp, it) },
@@ -158,9 +178,6 @@ fun StoriesPlayer(
                 .scale(fractionOfSize * scale)
                 .clip(RoundedCornerShape(cornerRadius + radius))
         ) {
-            val progress = remember(storySet, storySet.currentProgress) {
-                storySet.currentProgress
-            }
 
             ComposedStoryProgressBar(
                 modifier = Modifier
@@ -177,16 +194,32 @@ fun StoriesPlayer(
                         .size(sizeDp)
                         .zIndex(1f),
                     exoPlayer = exoPlayer,
-                    playing = storySet.playing,
                     currentVideoIndex = storySet.currentVideoIndex,
-                    onStoryProgressChange = { viewModel.setProgress(it) },
-                    onStoryFinished = onStoryFinished(viewModel, onFinishedStorySet),
+                    onStoryProgressChange = {
+                        progress = it
+                    },
+                    onStoryFinished = onStoryFinished(
+                        storySet,
+                        currentStoryIndex,
+                        {
+                            currentStoryIndex = it
+                            updateCurrentStoryIndex(it)
+                        },
+                        onFinishedStorySet
+                    ),
                 )
                 is Story.Static -> StaticStoryPlayer(
-                    story = storySet!!.currentStaticStory,
+                    story = storySet.currentStaticStory,
                     playerState = playerState,
-                    onStoryProgressChange = { viewModel.setProgress(it)  },
-                    onStoryFinished = onStoryFinished(viewModel, onFinishedStorySet),
+                    onStoryProgressChange = { progress = it },
+                    onStoryFinished = onStoryFinished(
+                        storySet,
+                        currentStoryIndex, {
+                            currentStoryIndex = it
+                            updateCurrentStoryIndex(it)
+                        },
+                        onFinishedStorySet
+                    ),
                     animateFixedItems = storySet.isInFirstStory()
                 )
             }
@@ -195,19 +228,21 @@ fun StoriesPlayer(
 }
 
 private fun onStoryFinished(
-    viewModel: StorySetPlayerViewModel,
+    storySet: StorySet,
+    currentStoryIndex: Int,
+    updateCurrentStoryIndex: (Int) -> Unit,
     onFinishedstorySet: () -> Unit
 ): () -> Unit = {
-    if (viewModel.state.isInLastStory()) {
+    if (storySet.stories.lastIndex == currentStoryIndex) {
         onFinishedstorySet()
     } else {
-        viewModel.goToNextStory()
+        updateCurrentStoryIndex(currentStoryIndex + 1)
     }
 }
 
 
 enum class StoryFrameState() {
-    Playing, Paused, Unknown
+    Playing, Paused
 }
 
 fun StoryFrameState.isPlaying(): Boolean {

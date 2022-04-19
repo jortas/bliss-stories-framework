@@ -24,10 +24,12 @@ import com.example.blissstories.R
 import com.example.blissstories.projectutils.ThemeButtonColors
 import com.example.blissstories.i9stories.ui.StoryFrameState
 import com.example.blissstories.i9stories.ui.isPlaying
-import com.example.blissstories.models.Story
+import com.example.blissstories.models.api.StoryDto
+import com.example.blissstories.models.domain.Story
 import com.example.blissstories.projectutils.rememberTypography
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.temporal.ChronoUnit
+import kotlin.math.min
 
 @Composable
 fun StaticStoryPlayer(
@@ -163,9 +165,9 @@ fun StaticStoryPlayer(
         }
     }
 
-    LaunchedEffect(onStoryProgressChange, storyElapsedPlayingTime, block = {
-        onStoryProgressChange((storyElapsedPlayingTime / story.duration.timeInMs))
-    })
+    LaunchedEffect(onStoryProgressChange, storyElapsedPlayingTime) {
+        onStoryProgressChange(min(storyElapsedPlayingTime / story.duration.timeInMs.toFloat(), 1f))
+    }
 
 }
 

@@ -3,7 +3,7 @@ package com.example.blissstories.i9stories
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase
 
-class StorySetsPlayerKtTest : TestCase() {
+class StorySetsPlayerKtTestRemote : TestCase() {
     val width = 500.dp
     fun test0() {
         val result = middleMinInterpolation(0.dp, width, 0.9f, 1f)

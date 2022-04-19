@@ -2,33 +2,23 @@ package com.example.blissstories.i9stories.ui
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
-import com.example.blissstories.i9stories.ui.models.StorySetUiState
+import com.example.blissstories.models.domain.StorySet
 
 class StorySetsPlayerViewModel(
-    storySetsStateList: List<StorySetUiState>,
+    val storySetsStateList: List<StorySet>,
     initialStorySetIndex: Int
 ) : ViewModel() {
 
     var currentStorySetIndex by mutableStateOf(initialStorySetIndex)
         private set
 
-    val viewModels = storySetsStateList.map { StorySetPlayerViewModel(it) }
-
     private fun updateCurrentStorySetIndex(newCurrentStoryIndex: Int) {
         currentStorySetIndex = newCurrentStoryIndex
-        viewModels.forEach {
-            it.resetProgress()
-            it.setPlaying(false)
-        }
-        viewModels[currentStorySetIndex].setPlaying(true)
     }
 
     init {
         updateCurrentStorySetIndex(initialStorySetIndex)
     }
-
-    val currentStoryViewModel
-        get() = viewModels[currentStorySetIndex]
 
     fun goToNextStorySet() {
         updateCurrentStorySetIndex(currentStorySetIndex + 1)

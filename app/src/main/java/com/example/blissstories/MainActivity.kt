@@ -21,9 +21,8 @@ import androidx.compose.ui.unit.dp
 import com.example.blissstories.i9stories.ui.StorySetsPlayer
 import com.example.blissstories.i9stories.ui.StorySetPreview
 import com.example.blissstories.i9stories.ui.StorySetsPlayerViewModel
-import com.example.blissstories.i9stories.ui.models.StorySetUiState
-import com.example.blissstories.models.mocks.staticStoryFactoryMock
-import com.example.blissstories.models.mocks.storyFactoryMock
+import com.example.blissstories.models.api.mocks.staticStoryFactoryMock
+import com.example.blissstories.models.api.mocks.storyFactoryMock
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                 staticStoryFactoryMock(),
                 //   staticStoryFactoryMock(),
                 //   staticStoryFactoryMock()
-            ).map { StorySetUiState(it) }
+            )
 
         composeView.apply {
             // Dispose the Composition when the view's LifecycleOwner

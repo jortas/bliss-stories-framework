@@ -1,4 +1,4 @@
-package com.example.blissstories.models
+package com.example.blissstories.models.domain
 
 import android.content.Context
 import androidx.compose.runtime.Composable

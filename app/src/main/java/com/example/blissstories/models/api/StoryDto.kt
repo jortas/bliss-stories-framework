@@ -1,19 +1,12 @@
-package com.example.blissstories.models
+package com.example.blissstories.models.api
 
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
 
-sealed class Story() {
+sealed class StoryDto() {
     abstract val order: Int
 
-
-    data class Video(val video: Uri, override val order: Int) : Story() {
-        companion object {
-            fun buildFromM3u8(m3u8Link: Uri) {
-                return
-            }
-        }
-    }
+    data class Video(val video: Uri, override val order: Int) : StoryDto()
 
     data class Static(
         val color: Color,
@@ -21,7 +14,7 @@ sealed class Story() {
         val title: String,
         val description: String? = null,
         override val order: Int
-    ) : Story() {
+    ) : StoryDto() {
 
         enum class Duration(val timeInMs: kotlin.Long) {
             Short(6000), Long(12000)
