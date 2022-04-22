@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.example.blissstories.i9stories.ui.frames.GOLD_RATIO
+import com.example.blissstories.i9stories.ui.frames.StoriesPlayer
 import com.example.blissstories.utills.animateDpSizeAsState
 import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.middleMinInterpolation
@@ -35,8 +37,8 @@ fun StorySetsPlayer(
     close: () -> Unit,
     onFinishedStorySets: () -> Unit = {},
 ) {
+    var focusedStoryIndex by remember(viewModel) { mutableStateOf(viewModel.initialStorySetIndex) }
 
-    val focusedStoryIndex = viewModel.currentStorySetIndex
     var justLaunched by remember { mutableStateOf(true) }
     var closeEvent by remember { mutableStateOf(false) }
 
@@ -159,10 +161,12 @@ fun StorySetsPlayer(
                         fractionOfSize = fractionOfSize,
                         storySet = viewModel.storySetsStateList[storySetIndex],
                         close = { closeEvent = true },
-                        initialPlayingState = focusedStoryIndex == storySetIndex,
+                        onFocus = focusedStoryIndex == storySetIndex,
                         initialCurrentStoryIndex = viewModel.storySetsStateList[storySetIndex].currentStoryIndex,
-                        updateCurrentStoryIndex = {viewModel.storySetsStateList[storySetIndex].currentStoryIndex = it},
-                        onFinishedStorySet = { viewModel.goToNextStorySet() },
+                        updateCurrentStoryIndex = {
+                            viewModel.storySetsStateList[storySetIndex].currentStoryIndex = it
+                        },
+                        onFinishedStorySet = { focusedStoryIndex++ },
                         onHorizontalDrag = { drag ->
                             onHorizontalDrag(
                                 focusedStoryIndex,
@@ -179,9 +183,9 @@ fun StorySetsPlayer(
                             snapValue.value =
                                 maxSizeDp.width * (horizontalDragAmount.value / maxSizeDp.width.value).value.roundToInt()
                             if (snapValue.value!! < horizontalDragAmount.value && direction == 1f) {
-                                viewModel.goToNextStorySet()
+                                focusedStoryIndex++
                             } else if (snapValue.value!! > horizontalDragAmount.value && direction == -1f) {
-                                viewModel.goToPreviousStorySet()
+                                focusedStoryIndex--
                             }
                         }
                     )

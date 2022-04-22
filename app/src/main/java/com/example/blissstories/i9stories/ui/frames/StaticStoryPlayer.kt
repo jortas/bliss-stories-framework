@@ -22,9 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.blissstories.R
 import com.example.blissstories.projectutils.ThemeButtonColors
-import com.example.blissstories.i9stories.ui.StoryFrameState
-import com.example.blissstories.i9stories.ui.isPlaying
-import com.example.blissstories.models.api.StoryDto
 import com.example.blissstories.models.domain.Story
 import com.example.blissstories.projectutils.rememberTypography
 import org.threeten.bp.LocalDateTime

@@ -2,13 +2,15 @@ package com.example.blissstories.i9stories.ui.frames
 
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.blissstories.i9stories.ui.StoryFrameState
 import com.example.blissstories.i9stories.ui.currentProgress
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.delay
@@ -18,19 +20,15 @@ fun VideoStoryFrame(
     modifier: Modifier = Modifier,
     exoPlayer: ExoPlayer,
     currentVideoIndex: Int,
+    onFocus: Boolean,
     onPlayingStateChange: (Boolean) -> Unit = {},
     onStoryProgressChange: (Float) -> Unit = {},
     onStoryFinished: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var progress by remember(currentVideoIndex) {
-        mutableStateOf(0f)
-    }
 
     LaunchedEffect(currentVideoIndex) {
-        if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
-            exoPlayer.seekTo(currentVideoIndex, 0L)
-        }
+        exoPlayer.seekTo(currentVideoIndex, 0L)
     }
 
     LaunchedEffect(key1 = "init", block = {
@@ -47,22 +45,6 @@ fun VideoStoryFrame(
         })
     })
 
-    LaunchedEffect(currentVideoIndex) {
-        if (exoPlayer.currentMediaItemIndex != currentVideoIndex) {
-            exoPlayer.seekTo(currentVideoIndex, 0L)
-        }
-    }
-
-    LaunchedEffect(progress) {
-        onStoryProgressChange(exoPlayer.currentProgress())
-    }
-
-    LaunchedEffect("initial") {
-        while(true) {
-            delay(10)
-            progress = exoPlayer.currentProgress()
-        }
-    }
     // player view
     DisposableEffect(
         AndroidView(

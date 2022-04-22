@@ -1,6 +1,5 @@
-package com.example.blissstories.i9stories.ui
+package com.example.blissstories.i9stories.ui.frames
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -12,16 +11,22 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.zIndex
+import com.example.blissstories.i9stories.ui.*
+import com.example.blissstories.i9stories.ui.ExoPlayerCreator
+import com.example.blissstories.i9stories.ui.MAX_RADIUS_IN_HORIZONTAL_TRANSITION
+import com.example.blissstories.i9stories.ui.addMultipleGestures
 import com.example.blissstories.i9stories.ui.components.ComposedStoryProgressBar
-import com.example.blissstories.i9stories.ui.frames.StaticStoryPlayer
-import com.example.blissstories.i9stories.ui.frames.VideoStoryFrame
+import com.example.blissstories.i9stories.ui.getTapType
 import com.example.blissstories.models.domain.Story
 import com.example.blissstories.models.domain.StorySet
 import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
+import kotlinx.coroutines.delay
 
 @Composable
 fun StoriesPlayer(
@@ -29,29 +34,24 @@ fun StoriesPlayer(
     cornerRadius: Dp,
     fractionOfSize: Float,
     storySet: StorySet,
-    initialPlayingState: Boolean,
+    onFocus: Boolean,
     initialCurrentStoryIndex: Int,
     updateCurrentStoryIndex: (Int) -> Unit,
     close: () -> Unit,
     onHorizontalDrag: (Dp) -> Unit,
     onHorizontalDragEnd: () -> Unit,
     onFinishedStorySet: () -> Unit = {},
-
-    ) {
+) {
     val context = LocalContext.current
     val density = LocalDensity.current
     var currentStoryIndex by remember(initialCurrentStoryIndex) {
         mutableStateOf(initialCurrentStoryIndex)
     }
-    var progress by remember(currentStoryIndex) {
+    var progress by remember(currentStoryIndex, onFocus) {
         mutableStateOf(0f)
     }
-    var playing by remember(initialPlayingState) {
-        mutableStateOf(initialPlayingState)
-    }
-
-    if (storySet == null) {
-        return
+    var playing by remember(onFocus) {
+        mutableStateOf(onFocus)
     }
 
     val playerState = remember(playing) {
@@ -61,7 +61,6 @@ fun StoriesPlayer(
             StoryFrameState.Paused
         }
     }
-
 
     val exoPlayer = remember {
         val exoPlayer = ExoPlayerCreator.createExoPlayer(
@@ -79,6 +78,12 @@ fun StoriesPlayer(
     }
     LaunchedEffect(playing) {
         exoPlayer.playWhenReady = playing
+    }
+
+    LaunchedEffect(playing, progress) {
+        if (storySet.currentStory is Story.Video) {
+            progress = exoPlayer.currentProgress()
+        }
     }
 
     fun onPress(tapEvent: Offset, width: Float) {
@@ -195,6 +200,7 @@ fun StoriesPlayer(
                         .zIndex(1f),
                     exoPlayer = exoPlayer,
                     currentVideoIndex = storySet.currentVideoIndex,
+                    onFocus = onFocus,
                     onStoryProgressChange = {
                         progress = it
                     },
@@ -239,7 +245,6 @@ private fun onStoryFinished(
         updateCurrentStoryIndex(currentStoryIndex + 1)
     }
 }
-
 
 enum class StoryFrameState() {
     Playing, Paused
