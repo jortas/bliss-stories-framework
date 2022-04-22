@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun StoryProgressBar(
+fun ProgressStep(
     modifier: Modifier,
     @FloatRange(from = 0.0, to = 1.0) progress: Float
 ) {
@@ -48,7 +48,7 @@ private fun BlissSliderPreview() {
                 .fillMaxWidth()
                 .height(16.dp)
         ) {
-            StoryProgressBar(
+            ProgressStep(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.5f),

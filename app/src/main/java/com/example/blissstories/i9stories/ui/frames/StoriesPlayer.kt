@@ -19,14 +19,13 @@ import com.example.blissstories.i9stories.ui.*
 import com.example.blissstories.i9stories.ui.ExoPlayerCreator
 import com.example.blissstories.i9stories.ui.MAX_RADIUS_IN_HORIZONTAL_TRANSITION
 import com.example.blissstories.i9stories.ui.addMultipleGestures
-import com.example.blissstories.i9stories.ui.components.ComposedStoryProgressBar
+import com.example.blissstories.i9stories.ui.components.ProgressBar
 import com.example.blissstories.i9stories.ui.getTapType
 import com.example.blissstories.models.domain.Story
 import com.example.blissstories.models.domain.StorySet
 import com.example.blissstories.utills.hyperbolicTangentInterpolator
 import com.example.blissstories.utills.toDpSize
 import com.example.blissstories.utills.toPx
-import kotlinx.coroutines.delay
 
 @Composable
 fun StoriesPlayer(
@@ -76,6 +75,7 @@ fun StoriesPlayer(
         exoPlayer.pauseAtEndOfMediaItems = true
         exoPlayer
     }
+
     LaunchedEffect(playing) {
         exoPlayer.playWhenReady = playing
     }
@@ -184,13 +184,13 @@ fun StoriesPlayer(
                 .clip(RoundedCornerShape(cornerRadius + radius))
         ) {
 
-            ComposedStoryProgressBar(
+            ProgressBar(
                 modifier = Modifier
                     .zIndex(2f)
                     .padding(16.dp),
-                numberOfStories = storySet.stories.size,
-                currentStoryIndex = storySet.currentStoryIndex,
-                currentStoryProgress = progress,
+                numberOfSteps = storySet.stories.size,
+                currentStep = storySet.currentStoryIndex,
+                stepProgress = progress,
             )
 
             when (storySet.currentStory) {
