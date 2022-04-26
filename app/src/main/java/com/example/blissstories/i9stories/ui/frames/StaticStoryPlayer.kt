@@ -24,8 +24,6 @@ import com.example.blissstories.R
 import com.example.blissstories.projectutils.ThemeButtonColors
 import com.example.blissstories.models.domain.Story
 import com.example.blissstories.projectutils.rememberTypography
-import org.threeten.bp.LocalDateTime
-import org.threeten.bp.temporal.ChronoUnit
 import kotlin.math.min
 
 @Composable
@@ -37,31 +35,26 @@ fun StaticStoryPlayer(
     onStoryFinished: () -> Unit = {},
     animateFixedItems: Boolean = false
 ) {
-    var storyElapsedPlayingTime by remember(story) {
-        mutableStateOf(0f)
+
+    val viewModel = remember() {
+        StaticStoryPlayerViewModel()
     }
-    var storyElapsedPausedTime by remember(story) {
-        mutableStateOf(0f)
+
+    val storyElapsedPlayingTime by viewModel.elapsedPlayingTime.collectAsState()
+
+    LaunchedEffect(story) {
+        viewModel.setClock(story.duration.timeInMs)
     }
-    val startedPlayingTime = remember(story, playerState) {
-        LocalDateTime.now()
+
+    LaunchedEffect(playerState) {
+        if (playerState.isPlaying()) {
+            viewModel.resumeClock()
+        }else{
+            viewModel.pauseClock()
+        }
     }
 
     val typography = rememberTypography()
-
-    LaunchedEffect(story, playerState, storyElapsedPlayingTime) {
-        val elapsedTime = startedPlayingTime.until(LocalDateTime.now(), ChronoUnit.MILLIS)
-        if (storyElapsedPlayingTime < story.duration.timeInMs) {
-            if (playerState.isPlaying()) {
-                storyElapsedPlayingTime = elapsedTime.toFloat() - storyElapsedPausedTime
-            } else {
-                storyElapsedPausedTime = elapsedTime.toFloat() - storyElapsedPlayingTime
-            }
-        } else {
-            onStoryFinished()
-        }
-
-    }
 
     val animatedColor by animateColorAsState(targetValue = story.color)
 
@@ -127,19 +120,6 @@ fun StaticStoryPlayer(
                 style = typography.headingMedium,
                 textAlign = TextAlign.Center
             )
-
-            if (story.description != null) {
-                Text(
-                    text = story.description,
-                    modifier = Modifier
-                        .alpha(textAlpha)
-                        .offset(y = textOffset)
-                        .fillMaxWidth(0.5f)
-                        .padding(16.dp),
-                    style = typography.captionLarge,
-                    textAlign = TextAlign.Center
-                )
-            }
 
             Button(
                 onClick = {},
