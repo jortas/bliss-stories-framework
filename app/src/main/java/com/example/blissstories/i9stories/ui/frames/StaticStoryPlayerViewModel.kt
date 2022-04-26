@@ -1,19 +1,20 @@
 package com.example.blissstories.i9stories.ui.frames
 
-import android.util.Log
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.blissstories.models.domain.Story
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDateTime
 import org.threeten.bp.temporal.ChronoUnit
 
 class StaticStoryPlayerViewModel() : ViewModel() {
     var elapsedPlayingTime = MutableStateFlow(0f)
-    var startedPlayingTime = LocalDateTime.now()
+    private var startedPlayingTime = LocalDateTime.now()
+    val channel = Channel<Boolean>()
 
     var duration: Long = 0L
 
@@ -23,14 +24,16 @@ class StaticStoryPlayerViewModel() : ViewModel() {
         this.duration = duration
     }
 
-    private lateinit var clockJob: Job
+    private var clockJob: Job? = null
     fun resumeClock() {
         startedPlayingTime = LocalDateTime.now()
-        clockJob = startClock(duration)
+        if (clockJob?.isActive != true) {
+            clockJob = startClock(duration)
+        }
     }
 
     fun pauseClock() {
-        clockJob.cancel()
+        clockJob?.cancel()
     }
 
     private fun startClock(duration: Long): Job {
@@ -42,7 +45,7 @@ class StaticStoryPlayerViewModel() : ViewModel() {
                 delay(20)
             }
             if (elapsedPlayingTime.value >= duration){
-                //onStoryFinished()
+                channel.send(true)
             }
         }
     }

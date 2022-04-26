@@ -24,6 +24,8 @@ import com.example.blissstories.R
 import com.example.blissstories.projectutils.ThemeButtonColors
 import com.example.blissstories.models.domain.Story
 import com.example.blissstories.projectutils.rememberTypography
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlin.math.min
 
 @Composable
@@ -36,20 +38,27 @@ fun StaticStoryPlayer(
     animateFixedItems: Boolean = false
 ) {
 
-    val viewModel = remember() {
+    val viewModel = remember {
         StaticStoryPlayerViewModel()
     }
 
     val storyElapsedPlayingTime by viewModel.elapsedPlayingTime.collectAsState()
 
+    LaunchedEffect (viewModel){
+        viewModel.channel.consumeEach {
+            onStoryFinished()
+        }
+    }
+
     LaunchedEffect(story) {
         viewModel.setClock(story.duration.timeInMs)
+        viewModel.resumeClock()
     }
 
     LaunchedEffect(playerState) {
         if (playerState.isPlaying()) {
             viewModel.resumeClock()
-        }else{
+        } else {
             viewModel.pauseClock()
         }
     }
